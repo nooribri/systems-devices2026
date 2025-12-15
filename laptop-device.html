@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>تقرير أجهزة اللابتوب</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      direction: rtl;
+      background-color: #f0f0f0;
+      margin: 0; padding: 0 10px;
+    }
+    h2 { text-align: center; margin-top: 20px; }
+    form {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      max-width: 600px;
+      margin: 20px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input, textarea, button {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: green;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background-color: darkgreen; }
+    .search-container {
+      text-align: center;
+      margin: 20px auto;
+    }
+    .search-container input {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 300px;
+      background-size: 18px;
+      background-repeat: no-repeat;
+      background-position: 10px center;
+      padding-right: 35px;
+    }
+    table {
+      width: 100%;
+      background: #fff;
+      margin: 20px auto;
+      border-collapse: collapse;
+      box-shadow: 0 0 10px #ccc;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th { background-color: #007bff; color: white; }
+    .actions button {
+      margin: 0 2px;
+      padding: 6px 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .edit-btn { background-color: #28a745; color: white; }
+    .delete-btn { background-color: #dc3545; color: white; }
+    .export-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .footer-button {
+      text-align: center;
+      margin: 25px;
+    }
+    @media print {
+      form,
+      .search-container,
+      .export-buttons,
+      .footer-button,
+      th.actions,
+      td.actions {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>بيانات أجهزة اللابتوب</h2>
+
+  <form id="laptopForm">
+    <input type="text" id="deviceName" placeholder="اسم الجهاز" >
+    <input type="text" id="serialNumber" placeholder="الرقم التسلسل للجهاز" >
+    <input type="text" id="employeeName" placeholder="اسم الموظف المستلم" >
+    <input type="text" id="deviceCode" placeholder="رمز الجهاز">
+    <textarea id="notes" placeholder="ملاحظات"></textarea>
+    <button type="submit">إرسال</button>
+    <div id="status"></div>
+  </form>
+
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث في كل الحقول">
+  </div>
+  <div id="loading">جاري تحميل البيانات...</div>
+
+  <table id="laptopTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>اسم الجهاز</th>
+        <th>الرقم التسلسل للجهاز</th>
+        <th>اسم الموظف المستلم</th>
+        <th>رمز الجهاز</th>
+        <th>ملاحظات</th>
+        <th class="actions">الإجراء</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <div class="export-buttons">
+    <button onclick="exportToExcel()">📊 تصدير Excel</button>
+    <button onclick="window.print()">🖨️ طباعة</button>
+  </div>
+
+  <div class="footer-button">
+    <button onclick="location.href='index.html'">↩️ رجوع</button>
+  </div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzho2psvxJl8LPQ7JWu7uxf_kNdtRy8aX9DRu9fJh-suGgZGncpUyYR5dVXb5SgT1nJWg/exec"; // استبدل بـ رابط النشر
+
+const form = document.getElementById("laptopForm");
+let isEditMode = false;
+let editDeviceName = null;
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+
+  const formData = new FormData();
+  formData.set("اسم الجهاز", document.getElementById("deviceName").value.trim());
+  formData.set("الرقم التسلسل للجهاز", document.getElementById("serialNumber").value.trim());
+  formData.set("اسم الموظف المستلم", document.getElementById("employeeName").value.trim());
+  formData.set("رمز الجهاز", document.getElementById("deviceCode").value.trim());
+  formData.set("ملاحظات", document.getElementById("notes").value.trim());
+  formData.set("action", isEditMode ? "edit" : "add");
+
+  fetch(scriptURL, { method: 'POST', body: formData })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      form.reset();
+      isEditMode = false;
+      editDeviceName = null;
+      loadData();
+    })
+    .catch(error => {
+      console.error("Error!", error);
+      alert("❌ حدث خطأ في الاتصال");
+    });
+});
+
+function loadData() {
+  fetch(scriptURL)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
+      window.labtopData = data;
+
+      data.forEach((item, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item["اسم الجهاز"]}</td>
+          <td>${item["الرقم التسلسل للجهاز"]}</td>
+          <td>${item["اسم الموظف المستلم"]}</td>
+          <td>${item["رمز الجهاز"]}</td>
+          <td>${item["ملاحظات"]}</td>
+          <td class="actions">
+            <button class="edit-btn" onclick="editRow(${index})">✏️ تعديل</button>
+            <button class="delete-btn" onclick="deleteRow('${item["اسم الجهاز"]}')">🗑️ حذف</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.getElementById("laptopTable").style.display = "table";
+      document.getElementById("loading").style.display = "none";
+    })
+    .catch(err => {
+      console.error("❌ فشل تحميل البيانات:", err);
+      alert("❌ حدث خطأ أثناء تحميل البيانات");
+    });
+}
+
+function editRow(index) {
+  const item = window.labtopData[index];
+  document.getElementById("deviceName").value = item["اسم الجهاز"];
+  document.getElementById("serialNumber").value = item["الرقم التسلسل للجهاز"];
+  document.getElementById("employeeName").value = item["اسم الموظف المستلم"];
+  document.getElementById("deviceCode").value = item["رمز الجهاز"];
+  document.getElementById("notes").value = item["ملاحظات"];
+  isEditMode = true;
+  editDeviceName = item["اسم الجهاز"];
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deleteRow(deviceName) {
+  if (confirm("هل أنت متأكد أنك تريد حذف هذا الجهاز؟")) {
+    const formData = new FormData();
+    formData.append("action", "delete");
+    formData.append("اسم الجهاز", deviceName);
+
+    fetch(scriptURL, { method: 'POST', body: formData })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        loadData();
+      })
+      .catch(err => {
+        console.error(err);
+        alert("❌ حدث خطأ أثناء الحذف");
+      });
+  }
+}
+
+document.getElementById("searchInput").addEventListener("input", function () {
+  const filter = this.value.toLowerCase();
+  const rows = document.querySelectorAll("#laptopTable tbody tr");
+  rows.forEach(row => {
+    const match = Array.from(row.children).some(cell =>
+      cell.textContent.toLowerCase().includes(filter)
+    );
+    row.style.display = match ? "" : "none";
+  });
+});
+
+function exportToExcel() {
+  const table = document.getElementById("laptopTable");
+  const workbook = XLSX.utils.table_to_book(table, { sheet: "بيانات اللابتوب" });
+  XLSX.writeFile(workbook, "اللابتوب.xlsx");
+}
+
+window.onload = loadData;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>تقريرأجهزة أخرى</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      direction: rtl;
+      background-color: #f0f0f0;
+      margin: 0; padding: 0 10px;
+    }
+    h2 { text-align: center; margin-top: 20px; }
+    form {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      max-width: 600px;
+      margin: 20px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input, textarea, button {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: green;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background-color: darkgreen; }
+    .search-container {
+      text-align: center;
+      margin: 20px auto;
+    }
+    .search-container input {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 300px;
+      background-size: 18px;
+      background-repeat: no-repeat;
+      background-position: 10px center;
+      padding-right: 35px;
+    }
+    table {
+      width: 100%;
+      background: #fff;
+      margin: 20px auto;
+      border-collapse: collapse;
+      box-shadow: 0 0 10px #ccc;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th { background-color: #007bff; color: white; }
+    .actions button {
+      margin: 0 2px;
+      padding: 6px 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .edit-btn { background-color: #28a745; color: white; }
+    .delete-btn { background-color: #dc3545; color: white; }
+    .export-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .footer-button {
+      text-align: center;
+      margin: 25px;
+    }
+    @media print {
+      form,
+      .search-container,
+      .export-buttons,
+      .footer-button,
+      th.actions,
+      td.actions {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>بيانات أجهزة أخرى</h2>
+
+ <form id="otherdevicesForm">
+    <input type="number" id="jobNumber"     placeholder="الرقم الوظيفي">
+    <input type="text"   id="employeeName"  placeholder="اسم الموظف">
+    <input type="text"   id="department"    placeholder="القسم">
+    <input type="text"   id="custodyName"   placeholder="اسم العهدة">
+    <input type="text"   id="deviceType"    placeholder="نوع الجهاز">
+    <input type="text"   id="serialNumber"  placeholder="الرقم التسلسل للجهاز">
+    <input type="text"   id="deviceCode"    placeholder="رمز الجهاز">
+    <textarea id="notes" placeholder="ملاحظات"></textarea>
+    <button type="submit">إرسال</button>
+  </form>
+
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث في كل الحقول">
+  </div>
+  <div id="loading">جاري تحميل البيانات...</div>
+
+ <table id="otherdevicesTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>م</th>
+        <th>الرقم الوظيفي</th>
+        <th>اسم الموظف</th>
+        <th>القسم</th>
+        <th>اسم العهدة</th>
+        <th>نوع الجهاز</th>
+        <th>الرقم التسلسل للجهاز</th>
+        <th>رمز الجهاز</th>
+        <th>ملاحظات</th>
+        <th>الإجراء</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+
+  <div class="export-buttons">
+    <button onclick="exportToExcel()">📊 تصدير Excel</button>
+    <button onclick="window.print()">🖨️ طباعة</button>
+  </div>
+
+  <div class="footer-button">
+    <button onclick="location.href='index.html'">↩️ رجوع</button>
+  </div>
+
+ <script>
+
+  const scriptURL = "https://script.google.com/macros/s/AKfycbwWmsHzcv1FKs61Cex4IrWHtrN4LBUpqbofrU2eeZP17shqtO7RLv24Ex_sesu1BQ/exec";
+
+ 
+   let isEditMode      = false;
+    let editDeviceCode  = null;
+    let otherdevicesData = [];
+
+    const form = document.getElementById("otherdevicesForm");
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const formData = new FormData();
+      formData.append("الرقم الوظيفي",        document.getElementById("jobNumber").value.trim());
+      formData.append("اسم الموظف",          document.getElementById("employeeName").value.trim());
+      formData.append("القسم",               document.getElementById("department").value.trim());
+      formData.append("اسم العهدة",          document.getElementById("custodyName").value.trim());
+      formData.append("نوع الجهاز",          document.getElementById("deviceType").value.trim());
+      formData.append("الرقم التسلسل للجهاز", document.getElementById("serialNumber").value.trim());
+      formData.append("رمز الجهاز",          document.getElementById("deviceCode").value.trim());
+      formData.append("ملاحظات",             document.getElementById("notes").value.trim());
+      formData.append("action",              isEditMode ? "edit" : "add");
+
+      fetch(scriptURL, { method: "POST", body: formData })
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+          form.reset();
+          isEditMode = false;
+          editDeviceCode = null;
+          loadData();
+        })
+        .catch(err => {
+          console.error("Error!", err);
+          alert("❌ حدث خطأ في الاتصال");
+        });
+    });
+
+
+      function loadData() {
+      document.getElementById("loading").style.display = "block";
+
+      fetch(scriptURL + "?api=list")
+        .then(res => res.json())
+        .then(data => {
+          otherdevicesData = data;
+
+          const tbody = document.getElementById("tableBody");
+          tbody.innerHTML = "";
+
+          data.forEach((item, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${index + 1}</td>
+              <td>${item["الرقم الوظيفي"] || ""}</td>
+              <td>${item["اسم الموظف"] || ""}</td>
+              <td>${item["القسم"] || ""}</td>
+              <td>${item["اسم العهدة"] || ""}</td>
+              <td>${item["نوع الجهاز"] || ""}</td>
+              <td>${item["الرقم التسلسل للجهاز"] || ""}</td>
+              <td>${item["رمز الجهاز"] || ""}</td>
+              <td>${item["ملاحظات"] || ""}</td>
+              <td>
+                <button onclick="editRow(${index})">✏️ تعديل</button>
+                <button onclick="deleteRow('${item["رمز الجهاز"] || ""}')">🗑️ حذف</button>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+
+          document.getElementById("otherdevicesTable").style.display = "table";
+          document.getElementById("loading").style.display = "none";
+        })
+        .catch(err => {
+          console.error("❌ فشل تحميل البيانات:", err);
+          alert("❌ حدث خطأ أثناء تحميل البيانات");
+        });
+    }
+
+    function editRow(index) {
+      const item = otherdevicesData[index];
+
+      document.getElementById("jobNumber").value     = item["الرقم الوظيفي"] || "";
+      document.getElementById("employeeName").value  = item["اسم الموظف"]    || "";
+      document.getElementById("department").value    = item["القسم"]         || "";
+      document.getElementById("custodyName").value   = item["اسم العهدة"]    || "";
+      document.getElementById("deviceType").value    = item["نوع الجهاز"]    || "";
+      document.getElementById("serialNumber").value  = item["الرقم التسلسل للجهاز"] || "";
+      document.getElementById("deviceCode").value    = item["رمز الجهاز"]    || "";
+      document.getElementById("notes").value         = item["ملاحظات"]       || "";
+
+      isEditMode = true;
+      editDeviceCode = item["رمز الجهاز"] || "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function deleteRow(deviceCode) {
+      if (!confirm("هل أنت متأكد من الحذف؟")) return;
+
+      const formData = new FormData();
+      formData.append("action", "delete");
+      formData.append("رمز الجهاز", deviceCode);
+
+      fetch(scriptURL, { method: "POST", body: formData })
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+          loadData();
+        })
+        .catch(err => {
+          console.error(err);
+          alert("❌ حدث خطأ أثناء الحذف");
+        });
+    }
+
+ document.getElementById("searchInput").addEventListener("input", function () {
+  const filter = this.value.toLowerCase();
+  const rows = document.querySelectorAll("#otherdevicesTable tbody tr");
+  rows.forEach(row => {
+    const match = Array.from(row.children).some(cell =>
+      cell.textContent.toLowerCase().includes(filter)
+    );
+    row.style.display = match ? "" : "none";
+  });
+});
+
+
+  function exportToExcel() {
+    // 🔁 نفس الشيء: استخدم id الجديد للجدول
+    const table = document.getElementById("otherdevicesTable");
+    const workbook = XLSX.utils.table_to_book(table, { sheet: "أجهزةأخرى" });
+    XLSX.writeFile(workbook, "أجهزة أخرى.xlsx");
+  }
+
+  window.onload = loadData;
+</script>
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>نموذج الموظفين والتقارير</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo&display=swap');
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Cairo', sans-serif;
+      direction: rtl;
+      background-color: #f0f0f0;
+      margin: 0; padding: 0 10px;
+    }
+    h2 { text-align: center; margin-top: 20px; }
+    form {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      max-width: 600px;
+      margin: 20px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input, button {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: green;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background-color: darkgreen; }
+    .search-container {
+      text-align: center;
+      margin: 20px auto;
+    }
+    .search-container input {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 300px;
+      background-image: url('https://cdn-icons-png.flaticon.com/512/622/622669.png');
+      background-size: 18px;
+      background-repeat: no-repeat;
+      background-position: 10px center;
+      padding-right: 35px;
+    }
+    table {
+      width: 100%;
+      background: #fff;
+      margin: 20px auto;
+      border-collapse: collapse;
+      box-shadow: 0 0 10px #ccc;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th { background-color: #007bff; color: white; }
+    .actions button { margin: 0 2px; }
+    .small-btn {
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 5px;
+      background-color: #c651b5;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .small-btn:hover { background-color: #a27dd6; }
+    .export-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .footer-button {
+      text-align: center;
+      margin: 25px;
+    }
+    #messageBox {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #28a745;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      font-size: 16px;
+      z-index: 9999;
+      display: none;
+    }
+    @media print {
+      form, .tools, .export-buttons, .footer-button, .search-container, th:last-child, td:last-child {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h2>بيانات الموظفين</h2>
+
+<form id="employee">
+  <input type="text" id="jobId" placeholder="الرقم الوظيفي" required>
+  <input type="text" id="name" placeholder="اسم الموظف" required>
+  <input type="text" id="department" placeholder="القسم">
+  <input type="text" id="jobTitle" placeholder="المسمى الوظيفي">
+  <input type="tel" id="phone" placeholder="رقم الهاتف" style="text-align: right;">
+  <input type="email" id="email" placeholder="البريد الإكتروني">
+  <button type="submit">إرسال البيانات</button>
+</form>
+
+<div class="search-container">
+  <input type="text" id="searchInput" placeholder="🔍 ابحث في كل الحقول">
+</div>
+
+<table id="staffTable">
+  <thead>
+    <tr>
+      <th>الرقم الوظيفي</th>
+      <th>اسم الموظف</th>
+      <th>القسم</th>
+      <th>المسمى الوظيفي</th>
+      <th>رقم الهاتف</th>
+      <th>البريد الإكتروني</th>
+      <th>الإجراء</th>
+    </tr>
+  </thead>
+  <tbody id="dataBody"></tbody>
+</table>
+
+<div class="export-buttons">
+  <button class="small-btn" onclick="exportToExcel()">تصدير Excel</button>
+  <button class="small-btn" onclick="window.print()">طباعة</button>
+</div>
+
+ <div class="footer-button">
+    <button onclick="location.href='index.html'">↩️ رجوع</button>
+  </div>
+
+<!-- ✅ صندوق الرسائل -->
+<div id="messageBox"></div>
+
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbzCD64xFovgqCHcmhfr248PdRdOUsAjKckXxt36-4IE7XPyqb8_PQXSAuKSHQKX4KntdA/exec"; // عدّل الرابط إن لزم
+const form = document.getElementById("employee");
+let isEditMode = false;
+let editJobId = null;
+
+// ✅ عرض الرسائل بشكل أنيق
+function showMessage(msg, type = "success") {
+  const box = document.getElementById("messageBox");
+  box.textContent = msg;
+  box.style.backgroundColor = type === "error" ? "#dc3545" : "#28a745";
+  box.style.display = "block";
+  setTimeout(() => { box.style.display = "none"; }, 4000);
+}
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+
+  const formData = new FormData();
+  const jobId = document.getElementById("jobId").value.trim();
+
+  formData.set("الرقم الوظيفي", jobId);
+  formData.set("اسم الموظف", document.getElementById("name").value.trim());
+  formData.set("القسم", document.getElementById("department").value.trim());
+  formData.set("المسمى الوظيفي", document.getElementById("jobTitle").value.trim());
+  formData.set("رقم الهاتف", document.getElementById("phone").value.trim());
+  formData.set("البريد الإكتروني", document.getElementById("email").value.trim());
+
+  formData.set("action", isEditMode ? "edit" : "add");
+
+  fetch(scriptURL, { method: 'POST', body: formData })
+    .then(res => res.text())
+    .then(msg => {
+      showMessage(msg);
+      form.reset();
+      isEditMode = false;
+      editJobId = null;
+      loadData();
+    })
+    .catch(error => {
+      console.error("Error!", error);
+      showMessage("❌ حدث خطأ في الاتصال", "error");
+    });
+});
+
+
+    function loadData() {
+  fetch(scriptURL)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById("dataBody");
+      tbody.innerHTML = "";
+      window.employeeData = data;
+
+      let warnings = [];
+
+      data.forEach((item, index) => {
+        const undefinedFields = [];
+
+        if (!item["الرقم الوظيفي"]) undefinedFields.push("الرقم الوظيفي");
+        if (!item["اسم الموظف"]) undefinedFields.push("اسم الموظف");
+        if (!item["القسم"]) undefinedFields.push("القسم");
+        if (!item["المسمى الوظيفي"]) undefinedFields.push("المسمى الوظيفي");
+        if (!item["رقم الهاتف"]) undefinedFields.push("رقم الهاتف");
+        if (!item["البريد الإكتروني"]) undefinedFields.push("البريد الإكتروني");
+
+        if (undefinedFields.length > 0) {
+          warnings.push(`صف رقم ${index + 1}: الحقول الناقصة - ${undefinedFields.join(", ")}`);
+        }
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item["الرقم الوظيفي"] || ''}</td>
+          <td>${item["اسم الموظف"] || ''}</td>
+          <td>${item["القسم"] || ''}</td>
+          <td>${item["المسمى الوظيفي"] || ''}</td>
+          <td>${item["رقم الهاتف"] || ''}</td>
+          <td>${item["البريد الإكتروني"] || ''}</td>
+          <td class="actions">
+            <button class="small-btn" onclick="editRow(${index})">✏️ تعديل</button>
+            <button class="small-btn" onclick="deleteRow('${item["الرقم الوظيفي"]}')">🗑️ حذف</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      if (warnings.length > 0) {
+        alert("⚠️ تنبيه: تم العثور على بيانات ناقصة:\n\n" + warnings.join("\n"));
+      }
+    })
+    .catch(err => {
+      console.error("❌ فشل تحميل البيانات:", err);
+      alert("❌ حدث خطأ أثناء تحميل البيانات");
+    });
+}
+
+
+function editRow(index) {
+  const item = window.employeeData[index];
+  document.getElementById("jobId").value = item["الرقم الوظيفي"];
+  document.getElementById("name").value = item["اسم الموظف"];
+  document.getElementById("department").value = item["القسم"];
+  document.getElementById("jobTitle").value = item["المسمى الوظيفي"];
+  document.getElementById("phone").value = item["رقم الهاتف"];
+  document.getElementById("email").value = item["البريد الإكتروني"];
+  isEditMode = true;
+  editJobId = item["الرقم الوظيفي"];
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deleteRow(jobId) {
+  if (confirm("هل أنت متأكد أنك تريد حذف هذا الموظف؟")) {
+    const formData = new FormData();
+    formData.append("action", "delete");
+    formData.append("الرقم الوظيفي", jobId);
+
+    fetch(scriptURL, { method: 'POST', body: formData })
+      .then(res => res.text())
+      .then(msg => {
+        showMessage(msg);
+        loadData();
+      })
+      .catch(err => {
+        console.error(err);
+        showMessage("❌ حدث خطأ أثناء الحذف", "error");
+      });
+  }
+}
+
+document.getElementById("searchInput").addEventListener("input", function () {
+  const filter = this.value.toLowerCase();
+  const rows = document.querySelectorAll("#staffTable tbody tr");
+  rows.forEach(row => {
+    const match = Array.from(row.children).some(cell =>
+      cell.textContent.toLowerCase().includes(filter)
+    );
+    row.style.display = match ? "" : "none";
+  });
+});
+
+function exportToExcel() {
+  const table = document.getElementById("staffTable");
+  const workbook = XLSX.utils.table_to_book(table, { sheet: "جدول الموظفين" });
+  XLSX.writeFile(workbook, "الموظفين.xlsx");
+}
+
+function exportToPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.text("تقرير الموظفين", 14, 10);
+  doc.autoTable({ html: '#staffTable' });
+ doc.save("الموظفين.pdf");
+}
+
+window.onload = loadData;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>الأجهزة القديمة</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      direction: rtl;
+      background-color: #f0f0f0;
+      margin: 0; padding: 0 10px;
+    }
+    h2 { text-align: center; margin-top: 20px; }
+    form {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      max-width: 600px;
+      margin: 20px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input, textarea, button {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: green;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background-color: darkgreen; }
+    .search-container {
+      text-align: center;
+      margin: 20px auto;
+    }
+    .search-container input {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 300px;
+      padding-right: 35px;
+    }
+    table {
+      width: 100%;
+      background: #fff;
+      margin: 20px auto;
+      border-collapse: collapse;
+      box-shadow: 0 0 10px #ccc;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th { background-color: #007bff; color: white; }
+    .actions button {
+      margin: 0 2px;
+      padding: 6px 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .edit-btn { background-color: #28a745; color: white; }
+    .delete-btn { background-color: #dc3545; color: white; }
+    .export-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .footer-button {
+      text-align: center;
+      margin: 25px;
+    }
+    @media print {
+      form, .tools, .export-buttons, .footer-button, .search-container, th:last-child, td:last-child {
+        display: none !important;
+      }
+    }
+    #status {
+      font-weight: bold;
+      margin-top: 10px;
+      transition: opacity 0.5s;
+    }
+    .no-print {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>بيانات الأجهزة القديمة</h2>
+
+  <form id="old-device">
+    <label>الرقم الوظيفي</label>
+    <input type="text" name="jobNumber" >
+
+    <label>اسم صاحب العهدة</label>
+    <input type="text" name="owner" >
+
+    <label>نوع الجهاز</label>
+    <input type="text" name="deviceType" >
+
+    <label>رقم التسلسل للجهاز</label>
+    <input type="text" name="serialDevice">
+
+    <label>اسم الجهاز</label>
+    <input type="text" name="deviceName" >
+
+    <label>رقم التسلسل للشاشة</label>
+    <input type="text" name="serialMonitor">
+
+    <label>رقم التسلسل للفأرة</label>
+    <input type="text" name="serialMouse">
+
+    <label>رقم التسلسل لوحة المفاتيح</label>
+    <input type="text" name="serialKeyboard">
+
+    <label>سنة الإستلام</label>
+    <input type="text" name="receiveYear" placeholder="سنة الإستلام">
+
+    <label>ملاحظات</label>
+    <textarea name="notes" rows="3"></textarea>
+
+    <button type="submit">إرسال</button>
+    <div id="status"></div>
+  </form>
+
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث هنا" />
+  </div>
+
+  <table id="deviceTable">
+    <thead>
+      <tr>
+        <th>الرقم الوظيفي</th>
+        <th>اسم صاحب العهدة</th>
+        <th>نوع الجهاز</th>
+        <th>رقم التسلسل للجهاز</th>
+        <th>اسم الجهاز</th>
+        <th>رقم التسلسل للشاشة</th>
+        <th>رقم التسلسل للفأرة</th>
+        <th>رقم التسلسل لوحة المفاتيح</th>
+         <th>سنة الإستلام</th>
+        <th>ملاحظات</th>
+        <th>الإجراء</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <div class="export-buttons">
+    <button onclick="exportToExcel()">تصدير Excel</button>
+    <button onclick="window.print()">طباعة</button>
+  </div>
+
+  <div class="footer-button">
+    <button onclick="location.href='index.html'">↩️ رجوع</button>
+  </div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbw5i0VKsTWgOhjhnfNqmhR6f9JoCb-3GUVf4ibekTyjybNkVhujb7sDgbLHmg1QISOK/exec"; // ضع رابط Web App الصحيح هنا
+   
+    const form = document.getElementById("old-device");
+    let isEditMode = false;
+    let editIndex = null;
+    let dataList = [];
+    let originalKeys = {
+      jobNumber: "",
+      serialDevice: "",
+      deviceName: ""
+    };
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const formData = new FormData();
+      formData.append("الرقم الوظيفي", form.elements["jobNumber"].value.trim());
+      formData.append("اسم صاحب العهدة", form.elements["owner"].value.trim());
+      formData.append("نوع الجهاز", form.elements["deviceType"].value.trim());
+      formData.append("رقم التسلسل للجهاز", form.elements["serialDevice"].value.trim());
+      formData.append("اسم الجهاز", form.elements["deviceName"].value.trim());
+      formData.append("رقم التسلسل للشاشة", form.elements["serialMonitor"].value.trim());
+      formData.append("رقم التسلسل للفأرة", form.elements["serialMouse"].value.trim());
+      formData.append("رقم التسلسل لوحة المفاتيح", form.elements["serialKeyboard"].value.trim());
+       formData.append("سنة الإستلام", form.elements["receiveYear"].value.trim());
+      formData.append("ملاحظات", form.elements["notes"].value.trim());
+      formData.append("action", isEditMode ? "edit" : "add");
+
+      if (isEditMode) {
+        formData.append("الرقم الوظيفي", originalKeys.jobNumber);
+        formData.append("رقم التسلسل للجهاز", originalKeys.serialDevice);
+        formData.append("اسم الجهاز", originalKeys.deviceName);
+      }
+
+      fetch(scriptURL, {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.text())
+      .then(result => {
+        document.getElementById("status").textContent = result;
+        document.getElementById("status").style.color = "green";
+        form.reset();
+        loadData();
+        isEditMode = false;
+      })
+      .catch(error => {
+        document.getElementById("status").textContent = "❌ حدث خطأ أثناء الإرسال";
+        document.getElementById("status").style.color = "red";
+        console.error(error);
+      });
+    });
+
+    function loadData() {
+      fetch(scriptURL)
+        .then(res => res.json())
+        .then(data => {
+          dataList = data;
+          const tbody = document.getElementById("tableBody");
+          tbody.innerHTML = "";
+          data.forEach((item, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${item["الرقم الوظيفي"] || ""}</td>
+              <td>${item["اسم صاحب العهدة"] || ""}</td>
+              <td>${item["نوع الجهاز"] || ""}</td>
+              <td>${item["رقم التسلسل للجهاز"] || ""}</td>
+              <td>${item["اسم الجهاز"] || ""}</td>
+              <td>${item["رقم التسلسل للشاشة"] || ""}</td>
+              <td>${item["رقم التسلسل للفأرة"] || ""}</td>
+              <td>${item["رقم التسلسل لوحة المفاتيح"] || ""}</td>
+              <td>${item["سنة الإستلام"] || ""}</td>
+              <td>${item["ملاحظات"] || ""}</td>
+              <td>
+                <button class="edit-btn" onclick="editRow(${index})">✏️</button>
+                <button class="delete-btn" onclick="deleteRow(${index})">🗑️</button>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+        })
+        .catch(err => {
+          console.error("❌ فشل تحميل البيانات:", err);
+          alert("❌ حدث خطأ أثناء تحميل البيانات");
+        });
+    }
+
+    function editRow(index) {
+      const item = dataList[index];
+      if (!item) return;
+
+      form.elements["jobNumber"].value = item["الرقم الوظيفي"] || "";
+      form.elements["owner"].value = item["اسم صاحب العهدة"] || "";
+      form.elements["deviceType"].value = item["نوع الجهاز"] || "";
+      form.elements["serialDevice"].value = item["رقم التسلسل للجهاز"] || "";
+      form.elements["deviceName"].value = item["اسم الجهاز"] || "";
+      form.elements["serialMonitor"].value = item["رقم التسلسل للشاشة"] || "";
+      form.elements["serialMouse"].value = item["رقم التسلسل للفأرة"] || "";
+      form.elements["serialKeyboard"].value = item["رقم التسلسل لوحة المفاتيح"] || "";
+      form.elements["receiveYear"].value = item["سنة الإستلام"] || "";
+      form.elements["notes"].value = item["ملاحظات"] || "";
+
+      originalKeys.jobNumber = item["الرقم الوظيفي"] || "";
+      originalKeys.serialDevice = item["رقم التسلسل للجهاز"] || "";
+      originalKeys.deviceName = item["اسم الجهاز"] || "";
+
+      isEditMode = true;
+      editIndex = index;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function deleteRow(index) {
+      const item = dataList[index];
+      const jobNumber = item["الرقم الوظيفي"];
+      const serialDevice = item["رقم التسلسل للجهاز"];
+      const deviceName = item["اسم الجهاز"];
+
+      if (!jobNumber || !serialDevice || !deviceName) {
+        alert("❌ لا يمكن حذف هذا الصف لأن بعض الحقول الأساسية غير موجودة.");
+        return;
+      }
+
+      if (confirm("هل أنت متأكد أنك تريد حذف هذا الجهاز؟")) {
+        const formData = new FormData();
+        formData.append("action", "delete");
+        formData.append("الرقم الوظيفي", jobNumber);
+        formData.append("رقم التسلسل للجهاز", serialDevice);
+        formData.append("اسم الجهاز", deviceName);
+
+        fetch(scriptURL, { method: 'POST', body: formData })
+          .then(res => res.text())
+          .then(msg => {
+            alert(msg);
+            loadData();
+          })
+          .catch(err => {
+            console.error(err);
+            alert("❌ حدث خطأ أثناء الحذف");
+          });
+      }
+    }
+
+    document.getElementById("searchInput").addEventListener("input", function () {
+      const filter = this.value.toLowerCase();
+      const rows = document.querySelectorAll("#deviceTable tbody tr");
+      rows.forEach(row => {
+        const match = Array.from(row.children).some(cell =>
+          cell.textContent.toLowerCase().includes(filter)
+        );
+        row.style.display = match ? "" : "none";
+      });
+    });
+
+    function exportToExcel() {
+      const table = document.getElementById("deviceTable");
+      const workbook = XLSX.utils.table_to_book(table, { sheet: "الأجهزة القديمة" });
+      XLSX.writeFile(workbook, "الأجهزة_القديمة.xlsx");
+    }
+
+    window.onload = loadData;
+  </script>
+</body>
+</html>

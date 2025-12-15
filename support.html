@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>تقرير الدعم الفني</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      direction: rtl;
+      background-color: #f0f0f0;
+      margin: 0; padding: 0 10px;
+    }
+    h2 { text-align: center; margin-top: 20px; }
+    form {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      max-width: 600px;
+      margin: 20px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input, textarea, button {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: green;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background-color: darkgreen; }
+    .search-container {
+      text-align: center;
+      margin: 20px auto;
+    }
+    .search-container input {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 300px;
+      background-size: 18px;
+      background-repeat: no-repeat;
+      background-position: 10px center;
+      padding-right: 35px;
+    }
+    table {
+      width: 100%;
+      background: #fff;
+      margin: 20px auto;
+      border-collapse: collapse;
+      box-shadow: 0 0 10px #ccc;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th { background-color: #007bff; color: white; }
+    .actions button {
+      margin: 0 2px;
+      padding: 6px 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .edit-btn { background-color: #28a745; color: white; }
+    .delete-btn { background-color: #dc3545; color: white; }
+    .export-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .footer-button {
+      text-align: center;
+      margin: 25px;
+    }
+    @media print {
+      form,
+      .search-container,
+      .export-buttons,
+      .footer-button,
+      th.actions,
+      td.actions {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>سجل الدعم الفني</h2>
+
+  <form id="supportForm">
+    <input type="text" id="serialNumber" placeholder="الرقم التسلسل" >
+    <input type="text" id="employeeName" placeholder="اسم الموظف" >
+    <input type="text" id="department" placeholder="القسم" >
+    <input type="text" id="problemCategory" placeholder="نوع العطل" >
+    <input type="text" id="descraptionProblem" placeholder="وصف العطل" >
+    <input type="text" id="actionTaken" placeholder="الإجراء المتخذ" >
+    <input type="date" id="dateofDay" lang="ar" style="direction: rtl;" >
+    <textarea id="notes" placeholder="ملاحظات"></textarea>
+    <button type="submit">إرسال</button>
+    <div id="status"></div>
+  </form>
+
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث في كل الحقول">
+  </div>
+
+
+  <table id="supportTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>الرقم التسلسل</th>
+        <th>اسم الموظف</th>
+        <th>القسم</th>
+        <th>نوع العطل</th>
+        <th>وصف العطل</th>
+        <th>الإجراء المتخذ</th>
+        <th>التاريخ</th>
+        <th>ملاحظات</th>
+        <th class="actions">الإجراء</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <div class="export-buttons">
+    <button onclick="exportToExcel()">📊 تصدير Excel</button>
+    <button onclick="window.print()">🖨️ طباعة</button>
+  </div>
+
+  <div class="footer-button">
+    <button onclick="location.href='index.html'">↩️ رجوع</button>
+  </div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbypcTUR4WQKja5kxsBjiZQlTOLSR2ynhzNqUj_47_vxfZySW4Yj5ownq9jO92hu1LAK/exec";
+
+   const form = document.getElementById("supportForm");
+  const table = document.getElementById("supportTable");
+  const tbody = document.getElementById("tableBody");
+
+  let isEditMode = false;
+  let editIndex = null;
+
+  // بيانات مخزنة مؤقتا
+  let supportData = [];
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.set("الرقم التسلسل", document.getElementById("serialNumber").value.trim());
+    formData.set("اسم الموظف", document.getElementById("employeeName").value.trim());
+    formData.set("القسم", document.getElementById("department").value.trim());
+    formData.set("نوع العطل", document.getElementById("problemCategory").value.trim());
+    formData.set("وصف العطل", document.getElementById("descraptionProblem").value.trim());
+    formData.set("الإجراء المتخذ", document.getElementById("actionTaken").value.trim());
+    formData.set("التاريخ", document.getElementById("dateofDay").value.trim());
+    formData.set("ملاحظات", document.getElementById("notes").value.trim());
+
+    formData.set("action", isEditMode ? "edit" : "add");
+
+    // عند التعديل، أرسل الرقم التسلسلي القديم كمفتاح للبحث
+    if (isEditMode && editIndex !== null) {
+      formData.set("serialNumberKey", supportData[editIndex]["الرقم التسلسل"]);
+    }
+
+    fetch(scriptURL, { method: 'POST', body: formData })
+      .then(response => response.text())
+      .then(msg => {
+        alert(msg);
+        form.reset();
+        isEditMode = false;
+        editIndex = null;
+        loadData();
+      })
+      .catch(error => {
+        console.error('Error!', error.message);
+        alert('❌ حدث خطأ في الاتصال');
+      });
+  });
+
+  function loadData() {
+    fetch(scriptURL)
+      .then(res => res.json())
+      .then(data => {
+        supportData = data;
+        tbody.innerHTML = "";
+
+        if(data.length === 0) {
+          table.style.display = "none";
+          return;
+        }
+
+        table.style.display = "table";
+
+        data.forEach((item, index) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${item["الرقم التسلسل"] || ""}</td>
+            <td>${item["اسم الموظف"] || ""}</td>
+            <td>${item["القسم"] || ""}</td>
+            <td>${item["نوع العطل"] || ""}</td>
+            <td>${item["وصف العطل"] || ""}</td>
+            <td>${item["الإجراء المتخذ"] || ""}</td>
+            <td>${item["التاريخ"] || ""}</td>
+            <td>${item["ملاحظات"] || ""}</td>
+            <td class="actions">
+              <button class="edit-btn" onclick="editRow(${index})">✏️ تعديل</button>
+              <button class="delete-btn" onclick="deleteRow(${index})">🗑️ حذف</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      })
+      .catch(err => {
+        console.error('Failed to load data:', err);
+      });
+  }
+
+  function editRow(index) {
+    const item = supportData[index];
+    if (!item) return;
+
+    document.getElementById("serialNumber").value = item["الرقم التسلسل"];
+    document.getElementById("employeeName").value = item["اسم الموظف"];
+    document.getElementById("department").value = item["القسم"];
+    document.getElementById("problemCategory").value = item["نوع العطل"];
+    document.getElementById("descraptionProblem").value = item["وصف العطل"];
+    document.getElementById("actionTaken").value = item["الإجراء المتخذ"];
+    document.getElementById("dateofDay").value = item["التاريخ"];
+    document.getElementById("notes").value = item["ملاحظات"];
+
+    isEditMode = true;
+    editIndex = index;
+  }
+
+  function deleteRow(index) {
+    if (!confirm("هل أنت متأكد من حذف هذا السجل؟")) return;
+
+    const formData = new FormData();
+    formData.set("action", "delete");
+    formData.set("serialNumberKey", supportData[index]["الرقم التسلسل"]);
+
+    fetch(scriptURL, { method: "POST", body: formData })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        loadData();
+      })
+      .catch(err => {
+        console.error("Failed to delete:", err);
+        alert("❌ حدث خطأ أثناء الحذف");
+      });
+  }
+  // يحوّل "yyyy-mm-dd" (أو ISO فيه T) إلى Date محلي عند منتصف الليل
+function parseDateLocal(s) {
+  if (!s) return NaN;
+  s = String(s).trim();
+  if (!s) return NaN;
+  if (s.includes('T')) s = s.split('T')[0];      // خذ الجزء قبل T إن وُجد
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return NaN;
+  return new Date(+m[1], +m[2]-1, +m[3]);        // تاريخ محلي بدون توقيت
+}
+
+ // helpers (ضعها قبل renderTable)
+const v = x => (x ?? '');
+function dateOnly(s) {
+  if (!s) return "";
+  const t = String(s).trim();
+  if (!t) return "";
+  if (t.includes("T")) return t.split("T")[0];
+  const m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m) {
+    const dd = m[1].padStart(2,'0'), mm = m[2].padStart(2,'0');
+    const yyyy = m[3].length === 2 ? ('20' + m[3]) : m[3];
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return t; // لو أصلاً yyyy-mm-dd
+}
+
+
+    document.getElementById("searchInput").addEventListener("input", function () {
+      const filter = this.value.toLowerCase();
+      const rows = document.querySelectorAll("#supportTable tbody tr");
+      rows.forEach(row => {
+        const match = Array.from(row.children).some(cell =>
+          cell.textContent.toLowerCase().includes(filter)
+        );
+        row.style.display = match ? "" : "none";
+      });
+    });
+
+    function exportToExcel() {
+      const table = document.getElementById("supportTable");
+      const workbook = XLSX.utils.table_to_book(table, { sheet: "الدعم الفني" });
+      XLSX.writeFile(workbook, "الدعم الفني.xlsx");
+    }
+
+    window.onload = loadData;
+  </script>
+</body>
+</html>

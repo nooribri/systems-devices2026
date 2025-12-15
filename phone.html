@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>تقريرهواتف مكتبية</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      direction: rtl;
+      background-color: #f0f0f0;
+      margin: 0; padding: 0 10px;
+    }
+    h2 { text-align: center; margin-top: 20px; }
+    form {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      max-width: 600px;
+      margin: 20px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input, textarea, button {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: green;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background-color: darkgreen; }
+    .search-container {
+      text-align: center;
+      margin: 20px auto;
+    }
+    .search-container input {
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 300px;
+      background-size: 18px;
+      background-repeat: no-repeat;
+      background-position: 10px center;
+      padding-right: 35px;
+    }
+    table {
+      width: 100%;
+      background: #fff;
+      margin: 20px auto;
+      border-collapse: collapse;
+      box-shadow: 0 0 10px #ccc;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th { background-color: #007bff; color: white; }
+    .actions button {
+      margin: 0 2px;
+      padding: 6px 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .edit-btn { background-color: #28a745; color: white; }
+    .delete-btn { background-color: #dc3545; color: white; }
+    .export-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .footer-button {
+      text-align: center;
+      margin: 25px;
+    }
+    @media print {
+      form,
+      .search-container,
+      .export-buttons,
+      .footer-button,
+      th.actions,
+      td.actions {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>بيانات هواتف مكتبية</h2>
+
+ <form id="phoneForm">
+    <input type="text"   id="employeeName" placeholder="اسم الموظف">
+    <input type="text"   id="phoneNumber"  placeholder="رقم الهاتف">
+    <input type="text"   id="deviceType"   placeholder="نوع الجهاز">
+    <input type="text"   id="serialNumber" placeholder="الرقم التسلسل للجهاز">
+    <textarea id="notes" placeholder="ملاحظات"></textarea>
+    <button type="submit">إرسال</button>
+  </form>
+
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث في كل الحقول">
+  </div>
+  <div id="loading">جاري تحميل البيانات...</div>
+
+ <table id="phoneTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>م</th>
+        <th>اسم الموظف</th>
+        <th>رقم الهاتف</th>
+        <th>نوع الجهاز</th>
+        <th>الرقم التسلسل للجهاز</th>
+        <th>ملاحظات</th>
+        <th>الإجراء</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+
+  <div class="export-buttons">
+    <button onclick="exportToExcel()">📊 تصدير Excel</button>
+    <button onclick="window.print()">🖨️ طباعة</button>
+  </div>
+
+  <div class="footer-button">
+    <button onclick="location.href='index.html'">↩️ رجوع</button>
+  </div>
+
+ <script>
+
+  const scriptURL = "https://script.google.com/macros/s/AKfycbxiwsa1MifmijQMaNPSsWOMTfS-4-KkXLDzEeQsHrEmcqwiBCk3G8osbVTRcrCwpwtc/exec";
+
+ 
+   const form = document.getElementById("phoneForm");
+  let isEditMode = false;
+    let editSerialNumber = null;
+    let phoneData = [];
+
+  form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const formData = new FormData();
+      formData.append("اسم الموظف",           document.getElementById("employeeName").value.trim());
+      formData.append("رقم الهاتف",           document.getElementById("phoneNumber").value.trim());
+      formData.append("نوع الجهاز",           document.getElementById("deviceType").value.trim());
+      formData.append("الرقم التسلسل للجهاز", document.getElementById("serialNumber").value.trim());
+      formData.append("ملاحظات",              document.getElementById("notes").value.trim());
+      formData.append("action",               isEditMode ? "edit" : "add");
+
+
+  fetch(scriptURL, { method: "POST", body: formData })
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+          form.reset();
+          isEditMode = false;
+          editSerialNumber = null;
+          loadData();
+        })
+        .catch(err => {
+          console.error("Error!", err);
+          alert("❌ حدث خطأ في الاتصال");
+        });
+    });
+
+function loadData() {
+      document.getElementById("loading").style.display = "block";
+
+      fetch(scriptURL + "?api=list")
+        .then(res => res.json())
+        .then(data => {
+          phoneData = data;
+          const tbody = document.getElementById("tableBody");
+          tbody.innerHTML = "";
+
+          data.forEach((item, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${index + 1}</td>
+              <td>${item["اسم الموظف"] || ""}</td>
+              <td>${item["رقم الهاتف"] || ""}</td>
+              <td>${item["نوع الجهاز"] || ""}</td>
+              <td>${item["الرقم التسلسل للجهاز"] || ""}</td>
+              <td>${item["ملاحظات"] || ""}</td>
+              <td>
+                <button onclick="editRow(${index})">✏️ تعديل</button>
+                <button onclick="deleteRow('${item["الرقم التسلسل للجهاز"] || ""}')">🗑️ حذف</button>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+
+          document.getElementById("phoneTable").style.display = "table";
+          document.getElementById("loading").style.display = "none";
+        })
+        .catch(err => {
+          console.error("❌ فشل تحميل البيانات:", err);
+          alert("❌ حدث خطأ أثناء تحميل البيانات");
+        });
+    }
+
+        
+        document.getElementById("phoneTable").style.display = "table";
+        document.getElementById("loading").style.display = "none";
+    
+
+
+  function editRow(index) {
+      const item = phoneData[index];
+
+      document.getElementById("employeeName").value = item["اسم الموظف"] || "";
+      document.getElementById("phoneNumber").value  = item["رقم الهاتف"] || "";
+      document.getElementById("deviceType").value   = item["نوع الجهاز"] || "";
+      document.getElementById("serialNumber").value = item["الرقم التسلسل للجهاز"] || "";
+      document.getElementById("notes").value        = item["ملاحظات"] || "";
+
+      isEditMode = true;
+      editSerialNumber = item["الرقم التسلسل للجهاز"] || "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function deleteRow(serialNumber) {
+      if (!confirm("هل أنت متأكد من الحذف؟")) return;
+
+      const formData = new FormData();
+      formData.append("action", "delete");
+      formData.append("الرقم التسلسل للجهاز", serialNumber);
+
+      fetch(scriptURL, { method: "POST", body: formData })
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+          loadData();
+        })
+        .catch(err => {
+          console.error(err);
+          alert("❌ حدث خطأ أثناء الحذف");
+        });
+    }
+
+  
+ document.getElementById("searchInput").addEventListener("input", function () {
+  const filter = this.value.toLowerCase();
+  const rows = document.querySelectorAll("#phoneTable tbody tr");
+  rows.forEach(row => {
+    const match = Array.from(row.children).some(cell =>
+      cell.textContent.toLowerCase().includes(filter)
+    );
+    row.style.display = match ? "" : "none";
+  });
+});
+
+
+  function exportToExcel() {
+    // 🔁 نفس الشيء: استخدم id الجديد للجدول
+    const table = document.getElementById("phoneTable");
+    const workbook = XLSX.utils.table_to_book(table, { sheet: "هواتف مكتبية" });
+    XLSX.writeFile(workbook, "هواتف مكتبية.xlsx");
+  }
+
+  window.onload = loadData;
+</script>
+</body>
+</html>

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>نظام تقنية المعلومات - الصفحة الرئيسية</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+
+    body {
+      font-family: 'Cairo', sans-serif;
+      direction: rtl;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #f3f6fb, #d6e4f5);
+      color: #222;
+      min-height: 100vh;
+    }
+
+    /* ========== الهيدر ========== */
+    header {
+      width: 100%;
+      padding: 20px 10px 10px;
+      position: relative;
+      text-align: center;
+      background: #ffffffee;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+    }
+
+    /* النصوص على اليمين */
+    .right-text {
+      position: absolute;
+      right: 25px;
+      top: 15px;
+      text-align: right;
+      color: #333;
+    }
+
+    .right-text h2,
+    .right-text h3,
+    .right-text h4 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    /* الشعار */
+    .logo-container {
+      margin-top: 5px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .logo {
+      width: 110px;
+      height: auto;
+      display: block;
+    }
+
+    /* النصوص تحت الشعار */
+    .center-title {
+      text-align: center;
+      margin-top: 10px;
+      color: #222;
+    }
+
+    .center-title h1 {
+      font-size: 1.8rem;
+      margin: 10px 0 0;
+      font-weight: 700;
+    }
+
+    .center-title h2 {
+      margin: 5px 0 15px;
+      opacity: 0.9;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .container {
+      margin: 10px auto 40px;
+      width: 90%;
+      max-width: 1100px;
+    }
+
+    .section-title {
+      font-weight: 700;
+      font-size: 20px;
+      margin: 25px 0 15px;
+      border-bottom: 3px solid #0077b6;
+      padding-bottom: 6px;
+      color: #0077b6;
+    }
+
+    /* شبكة البطاقات: 4 في الصف */
+    .cards-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      min-height: 170px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      text-align: center;
+      color: #222;
+      user-select: none;
+      padding: 10px;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 10px 20px rgba(0,119,182,0.25);
+    }
+
+    .card img {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 10px;
+      object-fit: contain;
+    }
+
+    .card span {
+      font-weight: 700;
+      font-size: 15px;
+      padding: 0 6px;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow-wrap: break-word;
+    }
+
+    /* كرت الدعم الفني مثل باقي البطاقات */
+    .support-card {
+      background: #ffffff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      color: #222;
+      border: 1px solid rgba(0,119,182,0.15);
+    }
+
+    .support-card span {
+      color: #222;
+    }
+
+    .support-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 10px 20px rgba(0,119,182,0.25);
+    }
+
+    /* ========== تخطيط البطاقات + العمود الجانبي ========== */
+    .main-layout {
+      display: flex;
+      gap: 24px;
+      align-items: stretch;        /* البانر يمتد بطول المحتوى */
+      flex-direction: row-reverse; /* عشان العمود الجانبي يكون أقصى اليمين */
+    }
+
+    .content-sections {
+      flex: 1;                     /* هذا العمود يحتوي الدعم الفني + النماذج */
+    }
+
+    /* العمود الجانبي: صورة + بطاقة نصية */
+    .side-column {
+      flex: 0 0 260px;             /* عرض العمود الجانبي */
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* البانر الجانبي كشريط طولي بالصورة */
+    .it-banner {
+      flex: 1;                     /* ياخذ أغلب الارتفاع */
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      background: #ffffff;
+    }
+
+    .it-banner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* بطاقة تعريف قسم التقنية */
+    .it-info-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      padding: 12px 14px;
+    }
+
+    .it-info-card h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      color: #0077b6;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .it-info-card p {
+      margin: 0;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.8;
+      text-align: justify;
+    }
+
+    /* استجابة للشاشات */
+    @media (max-width: 1024px) {
+      .cards-row {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .cards-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .right-text {
+        position: static;
+        text-align: center;
+        margin-bottom: 5px;
+      }
+
+      .main-layout {
+        flex-direction: column-reverse;   /* في الجوال العمود الجانبي ينزل تحت */
+      }
+
+      .side-column {
+        flex: 0 0 auto;
+        max-width: 320px;
+        margin: 0 auto 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .cards-row {
+        grid-template-columns: 1fr;
+      }
+
+      .center-title h1 {
+        font-size: 1.5rem;
+      }
+
+      .center-title h2 {
+        font-size: 1rem;
+      }
+    }
+
+    footer {
+      margin: 10px 0 20px;
+      font-size: 13px;
+      opacity: 0.8;
+      text-align: center;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  // منع فتح الصفحة بدون تسجيل دخول
+  if (sessionStorage.getItem('authenticated') !== 'true') {
+    window.location.href = 'login.html';
+  }
+</script>
+
+<!-- ========== الهيدر ========== -->
+<header>
+  <div class="right-text">
+    <h2>سلطنة عمان</h2>
+    <h3>هيئة حماية المستهلك</h3>
+    <h4>إدارة حماية المستهلك بمحافظة الظاهرة</h4>
+  </div>
+
+  <div class="logo-container">
+    <img src="image1.png" alt="شعار سلطنة عمان" class="logo">
+  </div>
+</header>
+
+<div class="center-title">
+  <h1>تطبيق إدارة الأنظمة والأجهزة</h1>
+  <h2>قسم تقنية المعلومات</h2>
+</div>
+
+<div class="container">
+
+  <div class="main-layout">
+    
+    <!-- العمود الأيسر: الدعم الفني + النماذج -->
+    <div class="content-sections">
+
+      <!-- الدعم الفني -->
+      <div class="section-title">💡 الدعم الفني</div>
+      <div class="cards-row">
+        <div class="card support-card" onclick="location.href='support.html'">
+          <img src="https://media.istockphoto.com/id/687438276/vector/support-service-professional-guarantee-maintenance-concept-flat-3d-web-isometric-infographic.jpg?s=612x612&w=is&k=20&c=NgHTdcuLDWxrH9dEnZJVeT1-GTwuNvkW0yOe79qAO-g=" alt="سجل الدعم الفني" />
+          <span>سجل الدعم الفني</span>
+        </div>
+      </div>
+
+      <!-- النماذج والتقارير -->
+      <div class="section-title">📋 النماذج والتقارير</div>
+      <div class="cards-row">
+        <div class="card" onclick="location.href='employee.html'">
+          <img src="https://img.icons8.com/ios-filled/100/00d8ff/user-male-circle.png" alt="بيانات الموظفين" />
+          <span>بيانات الموظفين</span>
+        </div>
+
+        <div class="card" onclick="location.href='new-device.html'">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSjJ2wyUvHjRt6RuQCKXhS-3okcMwuRRfk5reUFvwdisKPczXG0k4tMRuUQMPh78k5JUj8&usqp=CAU" alt="الأجهزة الجديدة" />
+          <span>الأجهزة الجديدة</span>
+        </div>
+
+        <div class="card" onclick="location.href='old-device.html'">
+          <img src="https://4.imimg.com/data4/TL/VG/MY-15540596/computer-repair-services.png" alt="الأجهزة القديمة" />
+          <span>الأجهزة القديمة</span>
+        </div>
+
+        <div class="card" onclick="location.href='scrap-device.html'">
+          <img src="https://cdn-icons-png.flaticon.com/128/556/556261.png" alt="الأجهزة المحالة للشطب" />
+          <span>الأجهزة المحالة للشطب</span>
+        </div>
+
+        <div class="card" onclick="location.href='printer-signature.html'">
+          <img src="https://cdn-icons-png.flaticon.com/128/1497/1497542.png" alt="الطابعات وأجهزة التوقيع الإكتروني"/>
+          <span>بيانات الطابعات وأجهزة التوقيع الإكتروني</span>
+        </div>
+
+        <div class="card" onclick="location.href='laptop-device.html'">
+          <img src="https://cdn.pixabay.com/photo/2016/08/28/17/30/laptop-1626471_1280.png" alt="أجهزة اللابتوب"/>
+          <span>أجهزة اللابتوب</span>
+        </div>
+
+        <div class="card" onclick="location.href='camera.html'">
+          <img src="https://cdn.pixabay.com/photo/2013/07/13/09/46/surveillance-155982_1280.png" alt="كاميرات ونقاط الوصول" />
+          <span>كاميرات ونقاط الوصول</span>
+        </div>
+
+        <div class="card" onclick="location.href='networkserver.html'">
+          <img src="https://cdn-icons-png.flaticon.com/512/3481/3481427.png" alt="أجهزة الشبكة والسيرفر" />
+          <span>أجهزة الشبكة والسيرفر</span>
+        </div>
+
+        <div class="card" onclick="location.href='phone.html'">
+          <img src="https://cdn-icons-png.flaticon.com/512/126/126509.png" alt="هواتف مكتبية" />
+          <span>هواتف مكتبية</span>
+        </div>
+
+        <div class="card" onclick="location.href='devices.html'">
+          <img src="https://cdn-icons-png.flaticon.com/512/0/619.png" alt="عهد الإلكترونية" />
+          <span>عهد الإلكترونية</span>
+        </div>
+
+        <div class="card" onclick="location.href='otherdevices.html'">
+          <img src="https://cdn-icons-png.flaticon.com/512/1041/1041916.png" alt="أجهزة أخرى" />
+          <span>أجهزة أخرى</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- العمود الأيمن: البانر + بطاقة تعريف القسم -->
+    <div class="side-column">
+      <!-- البانر الطولي -->
+      <div class="it-banner">
+        <!-- غيّر image.jpg إلى اسم/رابط الصورة اللي تبيها -->
+        <img src="image.jpg" alt="غرفة سيرفرات وتقنية المعلومات" />
+      </div>
+
+      <!-- بطاقة تعريف قسم تقنية المعلومات -->
+      <div class="it-info-card">
+        <h3>قسم تقنية المعلومات</h3>
+        <p>
+          قسم تقنية المعلومات هو الجهة الداعمة لجميع أنظمة العمل في الإدارة، حيث يتولى
+          إدارة وتشغيل أجهزة الحاسب الآلي والشبكات والطابعات والهواتف المكتبية، إضافة إلى
+          متابعة أنظمة البرامج وقواعد البيانات. يعمل الفريق على تقديم الدعم الفني المستمر
+          للموظفين من خلال حل الأعطال التقنية، وتجهيز الأجهزة الجديدة، وتحديث الأنظمة،
+          وتسهيل الوصول إلى الخدمات الإلكترونية، بما يضمن استمرارية العمل اليومي بكفاءة
+          عالية ورفع جودة خدمة المستفيدين داخل الإدارة وخارجها.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  &copy; 2025 قسم تقنية المعلومات – جميع الحقوق محفوظة
+</footer>
+<script>
+// منع كليك يمين
+document.addEventListener('contextmenu', function (e) {
+  e.preventDefault();
+});
+
+// منع بعض إختصارات لوحة المفاتيح لفتح الكونسول
+document.addEventListener('keydown', function (e) {
+  // F12
+  if (e.key === 'F12') {
+    e.preventDefault();
+  }
+
+  // Ctrl + Shift + I / J / C
+  if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) {
+    e.preventDefault();
+  }
+
+  // Ctrl + U (عرض كود الصفحة)
+  if (e.ctrlKey && e.key === 'U') {
+    e.preventDefault();
+  }
+});
+</script>
+
+</body>
+</html>
