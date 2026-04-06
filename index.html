@@ -95,15 +95,15 @@
     /* شبكة البطاقات: 4 في الصف */
     .cards-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
+  grid-template-columns: repeat(5, 1fr); /* 5 بطاقات */
+  gap: 15px;
       margin-bottom: 30px;
     }
 
     .card {
       background: #ffffff;
       border-radius: 12px;
-      min-height: 170px;
+      min-height: 150px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.08);
       display: flex;
       flex-direction: column;
@@ -114,7 +114,7 @@
       text-align: center;
       color: #222;
       user-select: none;
-      padding: 10px;
+      padding: 8px;
     }
 
     .card:hover {
@@ -122,16 +122,16 @@
       box-shadow: 0 10px 20px rgba(0,119,182,0.25);
     }
 
-    .card img {
-      width: 60px;
-      height: 60px;
+   .card img {
+  width: 50px;
+  height: 50px;
       margin-bottom: 10px;
       object-fit: contain;
     }
 
     .card span {
       font-weight: 700;
-      font-size: 15px;
+      font-size: 13px;
       padding: 0 6px;
       word-wrap: break-word;
       white-space: normal;
@@ -155,117 +155,30 @@
       box-shadow: 0 10px 20px rgba(0,119,182,0.25);
     }
 
-    /* ========== تخطيط البطاقات + العمود الجانبي ========== */
-    .main-layout {
-      display: flex;
-      gap: 24px;
-      align-items: stretch;        /* البانر يمتد بطول المحتوى */
-      flex-direction: row-reverse; /* عشان العمود الجانبي يكون أقصى اليمين */
-    }
-
-    .content-sections {
-      flex: 1;                     /* هذا العمود يحتوي الدعم الفني + النماذج */
-    }
-
-    /* العمود الجانبي: صورة + بطاقة نصية */
-    .side-column {
-      flex: 0 0 260px;             /* عرض العمود الجانبي */
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    /* البانر الجانبي كشريط طولي بالصورة */
-    .it-banner {
-      flex: 1;                     /* ياخذ أغلب الارتفاع */
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
-      background: #ffffff;
-    }
-
-    .it-banner img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    /* بطاقة تعريف قسم التقنية */
-    .it-info-card {
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      padding: 12px 14px;
-    }
-
-    .it-info-card h3 {
-      margin: 0 0 6px;
-      font-size: 16px;
-      color: #0077b6;
-      font-weight: 700;
-      text-align: center;
-    }
-
-    .it-info-card p {
-      margin: 0;
-      font-size: 13px;
-      color: #555;
-      line-height: 1.8;
-      text-align: justify;
-    }
-
-    /* استجابة للشاشات */
-    @media (max-width: 1024px) {
-      .cards-row {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    @media (max-width: 768px) {
-      .cards-row {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .right-text {
-        position: static;
-        text-align: center;
-        margin-bottom: 5px;
-      }
-
-      .main-layout {
-        flex-direction: column-reverse;   /* في الجوال العمود الجانبي ينزل تحت */
-      }
-
-      .side-column {
-        flex: 0 0 auto;
-        max-width: 320px;
-        margin: 0 auto 10px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .cards-row {
-        grid-template-columns: 1fr;
-      }
-
-      .center-title h1 {
-        font-size: 1.5rem;
-      }
-
-      .center-title h2 {
-        font-size: 1rem;
-      }
-    }
-
-    footer {
-      margin: 10px 0 20px;
-      font-size: 13px;
-      opacity: 0.8;
-      text-align: center;
-      color: #444;
-    }
-  </style>
+   /* ========== تخطيط البطاقات + العمود الجانبي ========== */
+/* ========== تخطيط البطاقات + العمود الجانبي ========== */ 
+.main-layout { display: flex; gap: 24px;
+   align-items: flex-start; flex-direction: row-reverse;
+    /* العمود الجانبي في اليمين */ }
+     .content-sections { flex: 1; } /* العمود الجانبي */
+     .side-column { flex: 0 0 260px; display: flex; flex-direction: column;
+       gap: 14px; } /* البانر كشريط طولي */ .it-banner { height: 520px; 
+        /* أهم سطر لتطويل البانر */ 
+        border-radius: 12px; overflow: hidden;
+         box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+          background: #ffffff; } .it-banner img { width: 100%; height: 100%;
+             object-fit: cover; display: block; }
+              /* بطاقة تعريف قسم التقنية */ 
+              .it-info-card 
+              { background: #ffffff; border-radius: 12px;
+                 box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+                 padding: 12px 14px; } .it-info-card h3 { margin: 0 0 6px;
+                   font-size: 16px; color: #0077b6; font-weight: 700;
+                    text-align: center; } .it-info-card p { margin: 0; font-size: 13px;
+                      
+  } footer { margin: 10px 0 20px;
+   font-size: 13px; opacity: 0.8;
+    text-align: center; color: #444; } </style>
 </head>
 <body>
 
@@ -358,6 +271,11 @@
           <span>هواتف مكتبية</span>
         </div>
 
+         <div class="card" onclick="location.href='mobile.html'">
+          <img src="https://smallimg.pngkey.com/png/small/110-1103674_mobile-phone-vector-icon-clip-art-transparent-download.png" alt="هواتف كفية" />
+          <span>هواتف كفية</span>
+        </div>
+
         <div class="card" onclick="location.href='devices.html'">
           <img src="https://cdn-icons-png.flaticon.com/512/0/619.png" alt="عهد الإلكترونية" />
           <span>عهد الإلكترونية</span>
@@ -367,9 +285,15 @@
           <img src="https://cdn-icons-png.flaticon.com/512/1041/1041916.png" alt="أجهزة أخرى" />
           <span>أجهزة أخرى</span>
         </div>
-      </div>
+      
+       <div class="card" onclick="location.href='otherscrap.html'">
+          <img src="https://i.postimg.cc/sxqTnJQD/shtb.jpg" alt="أجهزة أأخرى محالة للشطب" />
+          <span>أجهزة أخرى محالة للشطب</span>
+        </div>
+        </div>
+        </div> <!-- ✅ هذا السطر الناقص (content-sections) -->
 
-    </div>
+      
 
     <!-- العمود الأيمن: البانر + بطاقة تعريف القسم -->
     <div class="side-column">
@@ -399,30 +323,6 @@
 <footer>
   &copy; 2025 قسم تقنية المعلومات – جميع الحقوق محفوظة
 </footer>
-<script>
-// منع كليك يمين
-document.addEventListener('contextmenu', function (e) {
-  e.preventDefault();
-});
-
-// منع بعض إختصارات لوحة المفاتيح لفتح الكونسول
-document.addEventListener('keydown', function (e) {
-  // F12
-  if (e.key === 'F12') {
-    e.preventDefault();
-  }
-
-  // Ctrl + Shift + I / J / C
-  if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) {
-    e.preventDefault();
-  }
-
-  // Ctrl + U (عرض كود الصفحة)
-  if (e.ctrlKey && e.key === 'U') {
-    e.preventDefault();
-  }
-});
-</script>
 
 </body>
 </html>

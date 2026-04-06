@@ -142,7 +142,7 @@
     <input type="text" id="searchInput" placeholder="🔍 ابحث هنا" />
   </div>
 
-  <table id="deviceTable">
+  <table id="old-deviceTable">
     <thead>
       <tr>
         <th>الرقم الوظيفي</th>
@@ -245,8 +245,8 @@
               <td>${item["سنة الإستلام"] || ""}</td>
               <td>${item["ملاحظات"] || ""}</td>
               <td>
-                <button class="edit-btn" onclick="editRow(${index})">✏️</button>
-                <button class="delete-btn" onclick="deleteRow(${index})">🗑️</button>
+                <button class="edit-btn" onclick="editRow(${index})">✏️تعديل</button>
+                <button class="delete-btn" onclick="deleteRow(${index})">🗑️حذف</button>
               </td>
             `;
             tbody.appendChild(row);
@@ -315,7 +315,7 @@
 
     document.getElementById("searchInput").addEventListener("input", function () {
       const filter = this.value.toLowerCase();
-      const rows = document.querySelectorAll("#deviceTable tbody tr");
+      const rows = document.querySelectorAll("#old-deviceTable tbody tr");
       rows.forEach(row => {
         const match = Array.from(row.children).some(cell =>
           cell.textContent.toLowerCase().includes(filter)
@@ -325,7 +325,7 @@
     });
 
     function exportToExcel() {
-      const table = document.getElementById("deviceTable");
+      const table = document.getElementById("old-deviceTable");
       const workbook = XLSX.utils.table_to_book(table, { sheet: "الأجهزة القديمة" });
       XLSX.writeFile(workbook, "الأجهزة_القديمة.xlsx");
     }

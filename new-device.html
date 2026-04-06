@@ -8,146 +8,412 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
   <style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    direction: rtl;
+    background: linear-gradient(135deg, #f3f6fb, #eef2f7);
+    margin: 0;
+    padding: 20px;
+    color: #1f2937;
+  }
+
+  h2 {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 30px;
+    color: #0f172a;
+  }
+
+  form {
+    max-width: 1100px;
+    margin: 25px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 22px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+  }
+
+  .form-header {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  .form-header h3 {
+    margin: 0 0 8px;
+    font-size: 24px;
+    color: #111827;
+  }
+
+  .form-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 15px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(250px, 1fr));
+    gap: 18px 20px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .form-group label {
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 15px;
+    color: #374151;
+  }
+
+  input,
+  textarea,
+  button {
+    font-family: inherit;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 13px 15px;
+    font-size: 15px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    background-color: #f9fafb;
+    transition: all 0.25s ease;
+    outline: none;
+  }
+
+  input:focus,
+  textarea:focus {
+    border-color: #2563eb;
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 110px;
+  }
+
+  .section-title {
+    grid-column: 1 / -1;
+    margin: 10px 0 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #eef2f7;
+    font-size: 18px;
+    font-weight: 800;
+    color: #2563eb;
+  }
+
+  .submit-wrap {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  button[type="submit"] {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.25s ease;
+    box-shadow: 0 8px 18px rgba(21, 128, 61, 0.22);
+  }
+
+  button[type="submit"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(21, 128, 61, 0.28);
+  }
+
+  #status {
+    font-weight: bold;
+    font-size: 15px;
+  }
+
+  .search-container {
+    text-align: center;
+    margin: 20px auto;
+  }
+
+  .search-container input {
+    padding: 14px;
+    font-size: 16px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    width: min(100%, 420px);
+    background-color: #fff;
+  }
+
+  table {
+    width: 100%;
+    background: #fff;
+    margin: 20px auto;
+    border-collapse: collapse;
+    box-shadow: 0 0 10px #ccc;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  th, td {
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  th {
+    background-color: #2563eb;
+    color: white;
+  }
+
+  .actions button {
+    margin: 0 2px;
+    padding: 6px 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .edit-btn {
+    background-color: #22c55e;
+    color: white;
+  }
+
+  .delete-btn {
+    background-color: #ef4444;
+    color: white;
+  }
+
+  .export-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .export-buttons button,
+  .footer-button button {
+    border: none;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .export-buttons button {
+    background: #0f766e;
+    color: white;
+  }
+
+  .footer-button {
+    text-align: center;
+    margin: 25px;
+  }
+
+  .footer-button button {
+    background: #334155;
+    color: white;
+  }
+
+  #loading {
+    text-align: center;
+    font-weight: bold;
+    color: #475569;
+    margin-top: 15px;
+  }
+
+  @media (max-width: 768px) {
     body {
-      font-family: 'Cairo', sans-serif;
-      direction: rtl;
-      background-color: #f0f0f0;
-      margin: 0; padding: 0 10px;
+      padding: 12px;
     }
-    h2 { text-align: center; margin-top: 20px; }
+
     form {
-      background: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #ccc;
-      max-width: 600px;
-      margin: 20px auto;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
+      padding: 20px;
+      border-radius: 16px;
     }
-    input, textarea, button {
-      padding: 14px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+
+    .form-grid {
+      grid-template-columns: 1fr;
     }
-    button {
-      background-color: green;
-      color: white;
-      cursor: pointer;
+
+    h2 {
+      font-size: 24px;
     }
-    button:hover { background-color: darkgreen; }
-    .search-container {
-      text-align: center;
-      margin: 20px auto;
-    }
-    .search-container input {
-      padding: 14px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      width: 300px;
-      background-size: 18px;
-      background-repeat: no-repeat;
-      background-position: 10px center;
-      padding-right: 35px;
-    }
-    table {
-      width: 100%;
-      background: #fff;
-      margin: 20px auto;
-      border-collapse: collapse;
-      box-shadow: 0 0 10px #ccc;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
-    th { background-color: #007bff; color: white; }
-    .actions button {
-      margin: 0 2px;
-      padding: 6px 10px;
-      font-size: 14px;
-      border-radius: 5px;
-      border: none;
-      cursor: pointer;
-    }
-    .edit-btn { background-color: #28a745; color: white; }
-    .delete-btn { background-color: #dc3545; color: white; }
-    .export-buttons {
-      margin-top: 20px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .footer-button {
-      text-align: center;
-      margin: 25px;
-      
-    }
-    @media print {
-      form, .tools, .export-buttons, .footer-button, .search-container, th:last-child, td:last-child {
-        display: none !important;
-      }
-  
-    }
-    #status {
-      font-weight: bold;
-      margin-top: 10px;
-      transition: opacity 0.5s;
-    }
-    .no-print {
+  }
+
+  @media print {
+    form,
+    .tools,
+    .export-buttons,
+    .footer-button,
+    .search-container,
+    th:last-child,
+    td:last-child {
       display: none !important;
     }
-  </style>
+  }
+  @media print {
+  body {
+    zoom: 0.75; /* تصغير الصفحة بالكامل */
+  }
+
+  table {
+    font-size: 10px; /* تصغير الخط */
+  }
+
+  th, td {
+    padding: 4px; /* تقليل المسافات */
+    white-space: nowrap; /* منع النزول لسطر جديد */
+  }
+
+  h2 {
+    font-size: 16px;
+  }
+
+  /* إخفاء الأشياء غير المهمة */
+  form,
+  .tools,
+  .export-buttons,
+  .footer-button,
+  .search-container,
+  th:last-child,
+  td:last-child {
+    display: none !important;
+  }
+}
+@media print {
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  td, th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+</style>
 </head>
 <body>
 
 <h2>بيانات الأجهزة الجديدة</h2>
 
 <form id="new-deviceForm">
-  <label>الرقم الوظيفي</label>
-  <input type="text" name="jobNumber" >
-  <label>اسم صاحب العهدة</label>
-  <input type="text" name="owner" >
-  <label>نوع الجهاز</label>
-  <input type="text" name="deviceType" >
-  <label>رقم التسلسل للجهاز</label>
-  <input type="text" name="serialDevice">
-  <label>اسم الجهاز</label>
-  <input type="text" name="deviceName" >
-  <label>رقم التسلسل للشاشة</label>
-  <input type="text" name="serialMonitor">
-  <label>رقم التسلسل للفأرة</label>
-  <input type="text" name="serialMouse">
-  <label>رقم التسلسل لوحة المفاتيح</label>
-  <input type="text" name="serialKeyboard">
-  <label>سنة الإستلام</label>
-  <input type="text" name="receiveYear" placeholder="سنة الإستلام">
-  <label>ملاحظات</label>
-  <textarea name="notes" rows="3"></textarea>
-  <button type="submit">إرسال</button>
-  <div id="status"></div>
-</form>
+  <div class="form-header">
+    <h3>نموذج تسجيل جهاز جديد</h3>
+    <p>أدخل بيانات الجهاز </p>
+  </div>
 
+  <div class="form-grid">
+    <div class="section-title">البيانات الأساسية</div>
+
+    <div class="form-group">
+      <label for="jobNumber">الرقم الوظيفي</label>
+      <input type="text" id="jobNumber" name="jobNumber" placeholder="أدخل الرقم الوظيفي">
+    </div>
+
+    <div class="form-group">
+      <label for="owner">اسم صاحب العهدة</label>
+      <input type="text" id="owner" name="owner" placeholder="أدخل اسم صاحب العهدة">
+    </div>
+
+    <div class="form-group">
+      <label for="deviceType">نوع الجهاز</label>
+      <input type="text" id="deviceType" name="deviceType" placeholder="مثال: مكتبي / محمول">
+    </div>
+
+    <div class="form-group">
+      <label for="deviceName">اسم الجهاز</label>
+      <input type="text" id="deviceName" name="deviceName" placeholder="أدخل اسم الجهاز">
+    </div>
+
+    <div class="section-title">بيانات الجهاز وملحقاته</div>
+
+    <div class="form-group">
+      <label for="serialDevice">رقم التسلسل للجهاز</label>
+      <input type="text" id="serialDevice" name="serialDevice" placeholder="أدخل الرقم التسلسلي للجهاز">
+    </div>
+
+    <div class="form-group">
+      <label for="cpuCode">رمز المعالج (CPU)</label>
+      <input type="text" id="cpuCode" name="cpuCode" placeholder="أدخل رمز المعالج">
+    </div>
+
+    <div class="form-group">
+      <label for="serialMonitor">رقم التسلسل للشاشة</label>
+      <input type="text" id="serialMonitor" name="serialMonitor" placeholder="أدخل الرقم التسلسلي للشاشة">
+    </div>
+
+    <div class="form-group">
+      <label for="monitorCode">رمز الشاشة</label>
+      <input type="text" id="monitorCode" name="monitorCode" placeholder="أدخل رمز الشاشة">
+    </div>
+
+    <div class="form-group">
+      <label for="serialMouse">رقم التسلسل للفأرة</label>
+      <input type="text" id="serialMouse" name="serialMouse" placeholder="أدخل الرقم التسلسلي للفأرة">
+    </div>
+
+    <div class="form-group">
+      <label for="serialKeyboard">رقم التسلسل للوحة المفاتيح</label>
+      <input type="text" id="serialKeyboard" name="serialKeyboard" placeholder="أدخل الرقم التسلسلي للوحة المفاتيح">
+    </div>
+
+    <div class="form-group">
+      <label for="receiveYear">سنة الاستلام</label>
+      <input type="text" id="receiveYear" name="receiveYear" placeholder="مثال: 2026">
+    </div>
+
+    <div class="form-group full-width">
+      <label for="notes">ملاحظات</label>
+      <textarea id="notes" name="notes" rows="4" placeholder="أدخل أي ملاحظات إضافية هنا"></textarea>
+    </div>
+
+    <div class="submit-wrap">
+      <button type="submit">إرسال البيانات</button>
+      <div id="status"></div>
+    </div>
+  </div>
+</form>
 <div class="search-container">
   <input type="text" id="searchInput" placeholder="🔍 ابحث في كل الحقول">
 </div>
 
 <div id="loading">جاري تحميل البيانات...</div>
 
-<table id="newdeviceTable" style="display:none;">
+<table id="new-deviceTable" style="display:none;">
   <thead>
     <tr>
       <th>الرقم الوظيفي</th>
       <th>اسم صاحب العهدة</th>
       <th>نوع الجهاز</th>
       <th>رقم التسلسل للجهاز</th>
+       <th>رمز المعالج (CPU)</th>
       <th>اسم الجهاز</th>
       <th>رقم التسلسل للشاشة</th>
+      <th>رمز الشاشة</th>
       <th>رقم التسلسل للفأرة</th>
       <th>رقم التسلسل لوحة المفاتيح</th>
        <th>سنة الإستلام</th>
@@ -168,9 +434,9 @@
 </div>
 
 <script>
-  const scriptURL = "https://script.google.com/macros/s/AKfycbxGtJNsGyF34xu2CoFDUw54IJm2QeuA8dvDRFmlfxMrM8Y0EI1mgNccUXM6nOQIkIOD/exec"; // ← غيّر هذا إلى رابط السكربت الفعلي
+  const scriptURL = "https://script.google.com/macros/s/AKfycbw5RZrzW90BHrLlTKQvG29KQfnh0QemIHPEP1ogu2D6JqQFispwmzld9Vtmt_EQKVXs/exec"; // ← غيّر هذا إلى رابط السكربت الفعلي
+ 
   const form = document.getElementById("new-deviceForm");
-
   let isEditMode = false;
   let editIndex = null;
   let dataList = [];
@@ -188,8 +454,10 @@
     formData.append("اسم صاحب العهدة", form.elements["owner"].value.trim());
     formData.append("نوع الجهاز", form.elements["deviceType"].value.trim());
     formData.append("رقم التسلسل للجهاز", form.elements["serialDevice"].value.trim());
+   formData.append("رمز المعالج CPU", form.elements["cpuCode"].value.trim());
     formData.append("اسم الجهاز", form.elements["deviceName"].value.trim());
     formData.append("رقم التسلسل للشاشة", form.elements["serialMonitor"].value.trim());
+    formData.append("رمز الشاشة", form.elements["monitorCode"].value.trim());
     formData.append("رقم التسلسل للفأرة", form.elements["serialMouse"].value.trim());
     formData.append("رقم التسلسل لوحة المفاتيح", form.elements["serialKeyboard"].value.trim());
     formData.append("سنة الإستلام", form.elements["receiveYear"].value.trim());
@@ -235,20 +503,22 @@
             <td>${item["اسم صاحب العهدة"] || ""}</td>
             <td>${item["نوع الجهاز"] || ""}</td>
             <td>${item["رقم التسلسل للجهاز"] || ""}</td>
+            <td>${item["رمز المعالج CPU"] || ""}</td>
             <td>${item["اسم الجهاز"] || ""}</td>
             <td>${item["رقم التسلسل للشاشة"] || ""}</td>
+            <td>${item["رمز الشاشة"] || ""}</td>
             <td>${item["رقم التسلسل للفأرة"] || ""}</td>
             <td>${item["رقم التسلسل لوحة المفاتيح"] || ""}</td>
             <td>${item["سنة الإستلام"] || ""}</td>
             <td>${item["ملاحظات"] || ""}</td>
             <td>
-              <button class="edit-btn" onclick="editRow(${index})">✏️</button>
-              <button class="delete-btn" onclick="deleteRow(${index})">🗑️</button>
+              <button class="edit-btn" onclick="editRow(${index})">✏️تعديل</button>
+              <button class="delete-btn" onclick="deleteRow(${index})">🗑️حذف</button>
             </td>
           `;
           tbody.appendChild(row);
         });
-        document.getElementById("newdeviceTable").style.display = "table";
+        document.getElementById("new-deviceTable").style.display = "table";
         document.getElementById("loading").style.display = "none";
       })
       .catch(err => {
@@ -265,8 +535,10 @@
     form.elements["owner"].value = item["اسم صاحب العهدة"] || "";
     form.elements["deviceType"].value = item["نوع الجهاز"] || "";
     form.elements["serialDevice"].value = item["رقم التسلسل للجهاز"] || "";
+    form.elements["cpuCode"].value = item["رمز المعالج CPU"] || "";
     form.elements["deviceName"].value = item["اسم الجهاز"] || "";
     form.elements["serialMonitor"].value = item["رقم التسلسل للشاشة"] || "";
+    form.elements["monitorCode"].value = item["رمز الشاشة"] || "";
     form.elements["serialMouse"].value = item["رقم التسلسل للفأرة"] || "";
     form.elements["serialKeyboard"].value = item["رقم التسلسل لوحة المفاتيح"] || "";
     form.elements["receiveYear"].value = item["سنة الإستلام"] || "";
@@ -314,7 +586,7 @@
 
   document.getElementById("searchInput").addEventListener("input", function () {
     const filter = this.value.toLowerCase();
-    const rows = document.querySelectorAll("#newdeviceTable tbody tr");
+    const rows = document.querySelectorAll("#new-deviceTable tbody tr");
     rows.forEach(row => {
       const match = Array.from(row.children).some(cell =>
         cell.textContent.toLowerCase().includes(filter)
@@ -324,7 +596,7 @@
   });
 
   function exportToExcel() {
-    const table = document.getElementById("newdeviceTable");
+    const table = document.getElementById("new-deviceTable");
     const workbook = XLSX.utils.table_to_book(table, { sheet: "الأجهزة الجديدة" });
     XLSX.writeFile(workbook, "الأجهزة_الجديدة.xlsx");
   }

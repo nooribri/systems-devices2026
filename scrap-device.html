@@ -136,7 +136,7 @@
     <input type="text" id="searchInput" placeholder="🔍 ابحث هنا" />
   </div>
 
-  <table id="deviceTable">
+  <table id="scrap-deviceTable">
     <thead>
       <tr>
         <th>اسم صاحب العهدة</th>
@@ -162,163 +162,174 @@
     <button onclick="location.href='index.html'">↩️ رجوع</button>
   </div>
 
-  <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbzFqnMyIcZ3nip2t5D7c2jBY0Vb15I_1JNONccK8VuhKYyostZpYSgkE54QOlZ7jLYmCQ/exec";
+ <script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbyd6xyYXen6603A_sJhODPDFKH_CLgnxW5Jr8ZLyx8YwN-1fPIX0fJ5qwietAfXEi0eVA/exec";
 
-    const form = document.getElementById("scrap-device");
-    const submitBtn = document.getElementById("submitBtn");
-    let isEditMode = false;
-    let editIndex = null;
-    let dataList = [];
-    let originalKeys = {
-      deviceType: "",
-      serialDevice: "",
-      deviceName: ""
-    };
+const form = document.getElementById("scrap-device");
+const submitBtn = document.getElementById("submitBtn");
+let isEditMode = false;
+let dataList = [];
 
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
+let originalKeys = {
+  deviceType: "",
+  serialDevice: "",
+  deviceName: ""
+};
 
-      const formData = new FormData();
-      formData.append("اسم صاحب العهدة", form.elements["owner"].value.trim());
-      formData.append("اسم الجهاز", form.elements["deviceName"].value.trim());
-      formData.append("نوع الجهاز", form.elements["deviceType"].value.trim());
-      formData.append("رقم التسلسل للجهاز", form.elements["serialDevice"].value.trim()); 
-      formData.append("رقم التسلسل للشاشة", form.elements["serialMonitor"].value.trim());
-      formData.append("رقم التسلسل للفأرة", form.elements["serialMouse"].value.trim());
-      formData.append("رقم التسلسل لوحة المفاتيح", form.elements["serialKeyboard"].value.trim());
-      formData.append("ملاحظات", form.elements["notes"].value.trim());
-      formData.append("action", isEditMode ? "edit" : "add");
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
 
-      if (isEditMode) {
-        formData.append("نوع الجهاز", originalKeys.deviceType);
-        formData.append("رقم التسلسل للجهاز", originalKeys.serialDevice);
-        formData.append("اسم الجهاز", originalKeys.deviceName);
-      }
+  const formData = new FormData();
+  formData.set("اسم صاحب العهدة", form.elements["owner"].value.trim());
+  formData.set("اسم الجهاز", form.elements["deviceName"].value.trim());
+  formData.set("نوع الجهاز", form.elements["deviceType"].value.trim());
+  formData.set("رقم التسلسل للجهاز", form.elements["serialDevice"].value.trim());
+  formData.set("رقم التسلسل للشاشة", form.elements["serialMonitor"].value.trim());
+  formData.set("رقم التسلسل للفأرة", form.elements["serialMouse"].value.trim());
+  formData.set("رقم التسلسل لوحة المفاتيح", form.elements["serialKeyboard"].value.trim());
+  formData.set("ملاحظات", form.elements["notes"].value.trim());
+  formData.set("action", isEditMode ? "edit" : "add");
 
-      fetch(scriptURL, {
-        method: "POST",
-        body: formData
-      })
-      .then(response => response.text())
-      .then(result => {
-        document.getElementById("status").textContent = result;
-        document.getElementById("status").style.color = "green";
-        form.reset();
-        isEditMode = false;
-        submitBtn.textContent = "إرسال";
+  if (isEditMode) {
+    formData.set("originalDeviceType", originalKeys.deviceType);
+    formData.set("originalSerialDevice", originalKeys.serialDevice);
+    formData.set("originalDeviceName", originalKeys.deviceName);
+  }
+
+  fetch(scriptURL, {
+    method: "POST",
+    body: formData
+  })
+    .then(response => response.text())
+    .then(result => {
+      document.getElementById("status").textContent = result;
+      document.getElementById("status").style.color = "green";
+      form.reset();
+      isEditMode = false;
+      submitBtn.textContent = "إرسال";
+
+      originalKeys = {
+        deviceType: "",
+        serialDevice: "",
+        deviceName: ""
+      };
+
+      loadData();
+    })
+    .catch(error => {
+      document.getElementById("status").textContent = "❌ حدث خطأ أثناء الإرسال";
+      document.getElementById("status").style.color = "red";
+      console.error(error);
+    });
+});
+
+function loadData() {
+  fetch(scriptURL)
+    .then(res => res.json())
+    .then(data => {
+      dataList = data;
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
+
+      data.forEach((item, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item["اسم صاحب العهدة"] || ""}</td>
+          <td>${item["اسم الجهاز"] || ""}</td>
+          <td>${item["نوع الجهاز"] || ""}</td>
+          <td>${item["رقم التسلسل للجهاز"] || ""}</td>
+          <td>${item["رقم التسلسل للشاشة"] || ""}</td>
+          <td>${item["رقم التسلسل للفأرة"] || ""}</td>
+          <td>${item["رقم التسلسل لوحة المفاتيح"] || ""}</td>
+          <td>${item["ملاحظات"] || ""}</td>
+          <td>
+            <button class="edit-btn" onclick="editRow(${index})">✏️ تعديل</button>
+            <button class="delete-btn" onclick="deleteRow(${index})">🗑️ حذف</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    })
+    .catch(err => {
+      console.error("❌ فشل تحميل البيانات:", err);
+      alert("❌ حدث خطأ أثناء تحميل البيانات");
+    });
+}
+
+function editRow(index) {
+  const item = dataList[index];
+  if (!item) return;
+
+  form.elements["owner"].value = item["اسم صاحب العهدة"] || "";
+  form.elements["deviceName"].value = item["اسم الجهاز"] || "";
+  form.elements["deviceType"].value = item["نوع الجهاز"] || "";
+  form.elements["serialDevice"].value = item["رقم التسلسل للجهاز"] || "";
+  form.elements["serialMonitor"].value = item["رقم التسلسل للشاشة"] || "";
+  form.elements["serialMouse"].value = item["رقم التسلسل للفأرة"] || "";
+  form.elements["serialKeyboard"].value = item["رقم التسلسل لوحة المفاتيح"] || "";
+  form.elements["notes"].value = item["ملاحظات"] || "";
+
+  originalKeys.deviceType = item["نوع الجهاز"] || "";
+  originalKeys.serialDevice = item["رقم التسلسل للجهاز"] || "";
+  originalKeys.deviceName = item["اسم الجهاز"] || "";
+
+  isEditMode = true;
+  submitBtn.textContent = "تحديث";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function deleteRow(index) {
+  const item = dataList[index];
+  if (!item) return;
+
+  const deviceType = item["نوع الجهاز"] || "";
+  const serialDevice = item["رقم التسلسل للجهاز"] || "";
+  const deviceName = item["اسم الجهاز"] || "";
+
+  if (!deviceType || !serialDevice || !deviceName) {
+    alert("❌ لا يمكن حذف هذا الصف لأن بعض الحقول الأساسية غير موجودة.");
+    return;
+  }
+
+  if (confirm("هل أنت متأكد أنك تريد حذف هذا الجهاز؟")) {
+    const formData = new FormData();
+    formData.set("action", "delete");
+    formData.set("نوع الجهاز", deviceType);
+    formData.set("رقم التسلسل للجهاز", serialDevice);
+    formData.set("اسم الجهاز", deviceName);
+
+    fetch(scriptURL, { method: "POST", body: formData })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
         loadData();
       })
-      .catch(error => {
-        document.getElementById("status").textContent = "❌ حدث خطأ أثناء الإرسال";
-        document.getElementById("status").style.color = "red";
-        console.error(error);
+      .catch(err => {
+        console.error(err);
+        alert("❌ حدث خطأ أثناء الحذف");
       });
-    });
+  }
+}
 
-    function loadData() {
-      fetch(scriptURL)
-        .then(res => res.json())
-        .then(data => {
-          dataList = data;
-          const tbody = document.getElementById("tableBody");
-          tbody.innerHTML = "";
-          data.forEach((item, index) => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${item["اسم صاحب العهدة"] || ""}</td>
-              <td>${item["اسم الجهاز"] || ""}</td>
-              <td>${item["نوع الجهاز"] || ""}</td>
-              <td>${item["رقم التسلسل للجهاز"] || ""}</td>
-              <td>${item["رقم التسلسل للشاشة"] || ""}</td>
-              <td>${item["رقم التسلسل للفأرة"] || ""}</td>
-              <td>${item["رقم التسلسل لوحة المفاتيح"] || ""}</td>
-              <td>${item["ملاحظات"] || ""}</td>
-              <td>
-                <button class="edit-btn" onclick="editRow(${index})">✏️</button>
-                <button class="delete-btn" onclick="deleteRow(${index})">🗑️</button>
-              </td>
-            `;
-            tbody.appendChild(row);
-          });
-        })
-        .catch(err => {
-          console.error("❌ فشل تحميل البيانات:", err);
-          alert("❌ حدث خطأ أثناء تحميل البيانات");
-        });
-    }
+document.getElementById("searchInput").addEventListener("input", function () {
+  const filter = this.value.toLowerCase();
+  const rows = document.querySelectorAll("#scrap-deviceTable tbody tr");
 
-    function editRow(index) {
-      const item = dataList[index];
-      if (!item) return;
+  rows.forEach(row => {
+    const match = Array.from(row.children).some(cell =>
+      cell.textContent.toLowerCase().includes(filter)
+    );
+    row.style.display = match ? "" : "none";
+  });
+});
 
-      form.elements["owner"].value = item["اسم صاحب العهدة"] || "";
-      form.elements["deviceName"].value = item["اسم الجهاز"] || "";
-      form.elements["deviceType"].value = item["نوع الجهاز"] || "";
-      form.elements["serialDevice"].value = item["رقم التسلسل للجهاز"] || "";
-      form.elements["serialMonitor"].value = item["رقم التسلسل للشاشة"] || "";
-      form.elements["serialMouse"].value = item["رقم التسلسل للفأرة"] || "";
-      form.elements["serialKeyboard"].value = item["رقم التسلسل لوحة المفاتيح"] || "";
-      form.elements["notes"].value = item["ملاحظات"] || "";
+function exportToExcel() {
+  const table = document.getElementById("scrap-deviceTable");
+  const workbook = XLSX.utils.table_to_book(table, { sheet: "الأجهزة المحالة للشطب" });
+  XLSX.writeFile(workbook, "الأجهزة_المحالة_للشطب.xlsx");
+}
 
-      originalKeys.deviceType = item["نوع الجهاز"] || "";
-      originalKeys.serialDevice = item["رقم التسلسل للجهاز"] || "";
-      originalKeys.deviceName = item["اسم الجهاز"] || "";
-
-      isEditMode = true;
-      submitBtn.textContent = "تحديث";
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-
-    function deleteRow(index) {
-      const item = dataList[index];
-      const deviceType = item["نوع الجهاز"];
-      const serialDevice = item["رقم التسلسل للجهاز"];
-      const deviceName = item["اسم الجهاز"];
-
-      if (!deviceType || !serialDevice || !deviceName) {
-        alert("❌ لا يمكن حذف هذا الصف لأن بعض الحقول الأساسية غير موجودة.");
-        return;
-      }
-
-      if (confirm("هل أنت متأكد أنك تريد حذف هذا الجهاز؟")) {
-        const formData = new FormData();
-        formData.append("action", "delete");
-        formData.append("نوع الجهاز", deviceType);
-        formData.append("رقم التسلسل للجهاز", serialDevice);
-        formData.append("اسم الجهاز", deviceName);
-
-        fetch(scriptURL, { method: 'POST', body: formData })
-          .then(res => res.text())
-          .then(msg => {
-            alert(msg);
-            loadData();
-          })
-          .catch(err => {
-            console.error(err);
-            alert("❌ حدث خطأ أثناء الحذف");
-          });
-      }
-    }
-
-    document.getElementById("searchInput").addEventListener("input", function () {
-      const filter = this.value.toLowerCase();
-      const rows = document.querySelectorAll("#deviceTable tbody tr");
-      rows.forEach(row => {
-        const match = Array.from(row.children).some(cell =>
-          cell.textContent.toLowerCase().includes(filter)
-        );
-        row.style.display = match ? "" : "none";
-      });
-    });
-
-    function exportToExcel() {
-      const table = document.getElementById("deviceTable");
-      const workbook = XLSX.utils.table_to_book(table, { sheet: "الأجهزة المحالة للشطب" });
-      XLSX.writeFile(workbook, "الأجهزة_المحالة_للشطب.xlsx");
-    }
-
-    window.onload = loadData;
-  </script>
+window.onload = loadData;
+</script>
 </body>
 </html>

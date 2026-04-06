@@ -178,29 +178,7 @@
         alert('الرقم الوظيفي غير مصرح به.');
       }
     }
- 
-// منع كليك يمين
-document.addEventListener('contextmenu', function (e) {
-  e.preventDefault();
-});
+  </script>
 
-// منع بعض إختصارات لوحة المفاتيح لفتح الكونسول
-document.addEventListener('keydown', function (e) {
-  // F12
-  if (e.key === 'F12') {
-    e.preventDefault();
-  }
-
-  // Ctrl + Shift + I / J / C
-  if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) {
-    e.preventDefault();
-  }
-
-  // Ctrl + U (عرض كود الصفحة)
-  if (e.ctrlKey && e.key === 'U') {
-    e.preventDefault();
-  }
-});
- </script>
 </body>
 </html>

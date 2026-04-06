@@ -104,6 +104,7 @@
   <form id="networkserverForm">
     <input type="text" id="deviceType" placeholder="نوع الجهاز" >
     <input type="text" id="serialNumber" placeholder="الرقم التسلسل للجهاز" >
+     <input type="text" id="deviceCode" placeholder="رمز الجهاز">
     <textarea id="notes" placeholder="ملاحظات"></textarea>
     <button type="submit">إرسال</button>
     <div id="status"></div>
@@ -120,6 +121,7 @@
       <th>م</th>
       <th>نوع الجهاز</th>
       <th>الرقم التسلسل للجهاز</th>
+      <th>رمز الجهاز</th>
       <th>ملاحظات</th>
       <th class="actions">الإجراء</th>
     </tr>
@@ -137,24 +139,32 @@
   </div>
 
  <script>
-  const scriptURL = "https://script.google.com/macros/s/AKfycbzEE9NqpNl2ARzHlDTNMtdjgaLzeKxqWhblRxkYJ94VkvQc3zvQscFmVfYz5xtj41yJ/exec";
+  const scriptURL = "https://script.google.com/macros/s/AKfycbwnN0Wy5sb2bzNcdHzP7wVHOTKvYxyq_IpnzcgtmCAi5hshrSZQIwqL_7daZSL_Cgg/exec";
 
-  // 🔁 غيّر id في الـ HTML إلى: id="networkServerForm"
   const form = document.getElementById("networkserverForm");
 
   let isEditMode = false;
   let editserialNumber = null;
+  window.networkserverData = [];
 
-  form.addEventListener("submit", e => {
+  form.addEventListener("submit", function (e) {
     e.preventDefault();
 
     const formData = new FormData();
-    formData.append("نوع الجهاز", form.elements["deviceType"].value.trim());
-    formData.set("الرقم التسلسل للجهاز", document.getElementById("serialNumber").value.trim());
-    formData.set("ملاحظات", document.getElementById("notes").value.trim());
-    formData.set("action", isEditMode ? "edit" : "add");
+    formData.append("action", isEditMode ? "edit" : "add");
+    formData.append("نوع الجهاز", document.getElementById("deviceType").value.trim());
+    formData.append("الرقم التسلسل للجهاز", document.getElementById("serialNumber").value.trim());
+    formData.append("رمز الجهاز", document.getElementById("deviceCode").value.trim());
+   formData.append("ملاحظات", document.getElementById("notes").value.trim());
 
-    fetch(scriptURL, { method: 'POST', body: formData })
+    if (isEditMode) {
+      formData.append("originalSerialNumber", editserialNumber);
+    }
+
+    fetch(scriptURL, {
+      method: "POST",
+      body: formData
+    })
       .then(res => res.text())
       .then(msg => {
         alert(msg);
@@ -176,27 +186,24 @@
         const tbody = document.getElementById("tableBody");
         tbody.innerHTML = "";
 
-        // ❌ كان فيه: window.network&serverData = data;
-        // 🔁 نستخدم اسم متغير عادي بدون رموز
-        window.networkserverData = data; // متغير عام نستخدمه في editRow
+        window.networkserverData = data;
 
-       data.forEach((item, index) => {
-  const row = document.createElement("tr");
-  row.innerHTML = `
-    <td>${index + 1}</td>
-    <td>${item["نوع الجهاز"] || ""}</td>
-    <td>${item["الرقم التسلسل للجهاز"] || ""}</td>
-    <td>${item["ملاحظات"] || ""}</td>
-    <td class="actions">
-      <button class="edit-btn" onclick="editRow(${index})">✏️ تعديل</button>
-      <button class="delete-btn" onclick="deleteRow('${item["نوع الجهاز"] || ""}')">🗑️ حذف</button>
-    </td>
-  `;
-  tbody.appendChild(row);
-});
+        data.forEach((item, index) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${item["نوع الجهاز"] || ""}</td>
+            <td>${item["الرقم التسلسل للجهاز"] || ""}</td>
+            <td>${item["رمز الجهاز"] || ""}</td>
+           <td>${item["ملاحظات"] || ""}</td>
+            <td class="actions">
+              <button type="button" class="edit-btn" onclick="editRow(${index})">✏️ تعديل</button>
+              <button type="button" class="delete-btn" onclick='deleteRow(${JSON.stringify(item["الرقم التسلسل للجهاز"] || "")})'>🗑️ حذف</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
 
-
-        // 🔁 غيّر id في HTML إلى: id="networkServerTable"
         document.getElementById("networkserverTable").style.display = "table";
         document.getElementById("loading").style.display = "none";
       })
@@ -207,17 +214,21 @@
   }
 
   function editRow(index) {
-    // ❌ كان فيه: window.network&serverData[index]
-    // 🔁 نستخدم المتغير الجديد
     const item = window.networkserverData[index];
+
+    if (!item) {
+      alert("❌ لم يتم العثور على بيانات الصف");
+      return;
+    }
 
     document.getElementById("deviceType").value = item["نوع الجهاز"] || "";
     document.getElementById("serialNumber").value = item["الرقم التسلسل للجهاز"] || "";
-    document.getElementById("notes").value = item["ملاحظات"] || "";
-
+    document.getElementById("deviceCode").value = item["رمز الجهاز"] || "";
+   document.getElementById("notes").value = item["ملاحظات"] || "";
     isEditMode = true;
-    editserialNumber = item["الرقم التسلسل للجهاز"];
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    editserialNumber = item["الرقم التسلسل للجهاز"] || "";
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function deleteRow(serialNumber) {
@@ -226,7 +237,10 @@
       formData.append("action", "delete");
       formData.append("الرقم التسلسل للجهاز", serialNumber);
 
-      fetch(scriptURL, { method: 'POST', body: formData })
+      fetch(scriptURL, {
+        method: "POST",
+        body: formData
+      })
         .then(res => res.text())
         .then(msg => {
           alert(msg);
@@ -239,24 +253,22 @@
     }
   }
 
-  
- document.getElementById("searchInput").addEventListener("input", function () {
-  const filter = this.value.toLowerCase();
-  const rows = document.querySelectorAll("#networkserverTable tbody tr");
-  rows.forEach(row => {
-    const match = Array.from(row.children).some(cell =>
-      cell.textContent.toLowerCase().includes(filter)
-    );
-    row.style.display = match ? "" : "none";
-  });
-});
+  document.getElementById("searchInput").addEventListener("input", function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#networkserverTable tbody tr");
 
+    rows.forEach(row => {
+      const match = Array.from(row.children).some(cell =>
+        cell.textContent.toLowerCase().includes(filter)
+      );
+      row.style.display = match ? "" : "none";
+    });
+  });
 
   function exportToExcel() {
-    // 🔁 نفس الشيء: استخدم id الجديد للجدول
     const table = document.getElementById("networkserverTable");
-    const workbook = XLSX.utils.table_to_book(table, { sheet: "الشبكة والسيرفر" });
-    XLSX.writeFile(workbook, "الشبكة والسيرفر.xlsx");
+    const workbook = XLSX.utils.table_to_book(table, { sheet: "الشبكة وأجهزة السيرفر" });
+    XLSX.writeFile(workbook, "الشبكة_وأجهزة_السيرفر.xlsx");
   }
 
   window.onload = loadData;

@@ -73,8 +73,31 @@
       border: none;
       cursor: pointer;
     }
-    .edit-btn { background-color: #28a745; color: white; }
-    .delete-btn { background-color: #dc3545; color: white; }
+    .edit-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.edit-btn:hover {
+  background-color: #218838;
+}
+
+.delete-btn:hover {
+  background-color: #c82333;
+}
     .export-buttons {
       margin-top: 20px;
       display: flex;
@@ -96,6 +119,11 @@
         display: none !important;
       }
     }
+    @media print {
+  .actions {
+    display: none !important;
+  }
+}
   </style>
 </head>
 <body>
@@ -116,8 +144,8 @@
   <div class="search-container">
     <input type="text" id="searchInput" placeholder="🔍 ابحث في كل الحقول">
   </div>
-  <div id="loading">جاري تحميل البيانات...</div>
-
+  <div id="loading" style="display:none;">جاري تحميل البيانات...</div>
+ 
  <table id="otherdevicesTable" style="display:none;">
     <thead>
       <tr>
@@ -130,7 +158,7 @@
         <th>الرقم التسلسل للجهاز</th>
         <th>رمز الجهاز</th>
         <th>ملاحظات</th>
-        <th>الإجراء</th>
+        <th class="actions">الإجراء</th>
       </tr>
     </thead>
     <tbody id="tableBody"></tbody>
@@ -148,141 +176,161 @@
 
  <script>
 
-  const scriptURL = "https://script.google.com/macros/s/AKfycbwWmsHzcv1FKs61Cex4IrWHtrN4LBUpqbofrU2eeZP17shqtO7RLv24Ex_sesu1BQ/exec";
+  const scriptURL = "https://script.google.com/macros/s/AKfycby-ThM6vvJO00rbIOffkoyLwTQuAT5zJHw-ZUBvv53P_Tqm2a454Ey00HbZh3Qt0yDM/exec";
 
- 
-   let isEditMode      = false;
-    let editDeviceCode  = null;
-    let otherdevicesData = [];
+let isEditMode = false;
+let editDeviceCode = null;
+let otherdevicesData = [];
 
-    const form = document.getElementById("otherdevicesForm");
+const form = document.getElementById("otherdevicesForm");
 
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
+if (form) {
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
 
-      const formData = new FormData();
-      formData.append("الرقم الوظيفي",        document.getElementById("jobNumber").value.trim());
-      formData.append("اسم الموظف",          document.getElementById("employeeName").value.trim());
-      formData.append("القسم",               document.getElementById("department").value.trim());
-      formData.append("اسم العهدة",          document.getElementById("custodyName").value.trim());
-      formData.append("نوع الجهاز",          document.getElementById("deviceType").value.trim());
-      formData.append("الرقم التسلسل للجهاز", document.getElementById("serialNumber").value.trim());
-      formData.append("رمز الجهاز",          document.getElementById("deviceCode").value.trim());
-      formData.append("ملاحظات",             document.getElementById("notes").value.trim());
-      formData.append("action",              isEditMode ? "edit" : "add");
+    const formData = new FormData();
+    formData.append("الرقم الوظيفي", document.getElementById("jobNumber")?.value.trim() || "");
+    formData.append("اسم الموظف", document.getElementById("employeeName")?.value.trim() || "");
+    formData.append("القسم", document.getElementById("department")?.value.trim() || "");
+    formData.append("اسم العهدة", document.getElementById("custodyName")?.value.trim() || "");
+    formData.append("نوع الجهاز", document.getElementById("deviceType")?.value.trim() || "");
+    formData.append("الرقم التسلسل للجهاز", document.getElementById("serialNumber")?.value.trim() || "");
+    formData.append("رمز الجهاز", document.getElementById("deviceCode")?.value.trim() || "");
+    formData.append("ملاحظات", document.getElementById("notes")?.value.trim() || "");
+    formData.append("action", isEditMode ? "edit" : "add");
 
-      fetch(scriptURL, { method: "POST", body: formData })
-        .then(res => res.text())
-        .then(msg => {
-          alert(msg);
-          form.reset();
-          isEditMode = false;
-          editDeviceCode = null;
-          loadData();
-        })
-        .catch(err => {
-          console.error("Error!", err);
-          alert("❌ حدث خطأ في الاتصال");
-        });
-    });
-
-
-      function loadData() {
-      document.getElementById("loading").style.display = "block";
-
-      fetch(scriptURL + "?api=list")
-        .then(res => res.json())
-        .then(data => {
-          otherdevicesData = data;
-
-          const tbody = document.getElementById("tableBody");
-          tbody.innerHTML = "";
-
-          data.forEach((item, index) => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${index + 1}</td>
-              <td>${item["الرقم الوظيفي"] || ""}</td>
-              <td>${item["اسم الموظف"] || ""}</td>
-              <td>${item["القسم"] || ""}</td>
-              <td>${item["اسم العهدة"] || ""}</td>
-              <td>${item["نوع الجهاز"] || ""}</td>
-              <td>${item["الرقم التسلسل للجهاز"] || ""}</td>
-              <td>${item["رمز الجهاز"] || ""}</td>
-              <td>${item["ملاحظات"] || ""}</td>
-              <td>
-                <button onclick="editRow(${index})">✏️ تعديل</button>
-                <button onclick="deleteRow('${item["رمز الجهاز"] || ""}')">🗑️ حذف</button>
-              </td>
-            `;
-            tbody.appendChild(row);
-          });
-
-          document.getElementById("otherdevicesTable").style.display = "table";
-          document.getElementById("loading").style.display = "none";
-        })
-        .catch(err => {
-          console.error("❌ فشل تحميل البيانات:", err);
-          alert("❌ حدث خطأ أثناء تحميل البيانات");
-        });
+    if (isEditMode && editDeviceCode) {
+      formData.append("deviceCode_original", editDeviceCode);
     }
 
-    function editRow(index) {
-      const item = otherdevicesData[index];
-
-      document.getElementById("jobNumber").value     = item["الرقم الوظيفي"] || "";
-      document.getElementById("employeeName").value  = item["اسم الموظف"]    || "";
-      document.getElementById("department").value    = item["القسم"]         || "";
-      document.getElementById("custodyName").value   = item["اسم العهدة"]    || "";
-      document.getElementById("deviceType").value    = item["نوع الجهاز"]    || "";
-      document.getElementById("serialNumber").value  = item["الرقم التسلسل للجهاز"] || "";
-      document.getElementById("deviceCode").value    = item["رمز الجهاز"]    || "";
-      document.getElementById("notes").value         = item["ملاحظات"]       || "";
-
-      isEditMode = true;
-      editDeviceCode = item["رمز الجهاز"] || "";
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-
-    function deleteRow(deviceCode) {
-      if (!confirm("هل أنت متأكد من الحذف؟")) return;
-
-      const formData = new FormData();
-      formData.append("action", "delete");
-      formData.append("رمز الجهاز", deviceCode);
-
-      fetch(scriptURL, { method: "POST", body: formData })
-        .then(res => res.text())
-        .then(msg => {
-          alert(msg);
-          loadData();
-        })
-        .catch(err => {
-          console.error(err);
-          alert("❌ حدث خطأ أثناء الحذف");
-        });
-    }
-
- document.getElementById("searchInput").addEventListener("input", function () {
-  const filter = this.value.toLowerCase();
-  const rows = document.querySelectorAll("#otherdevicesTable tbody tr");
-  rows.forEach(row => {
-    const match = Array.from(row.children).some(cell =>
-      cell.textContent.toLowerCase().includes(filter)
-    );
-    row.style.display = match ? "" : "none";
+    fetch(scriptURL, { method: "POST", body: formData })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        form.reset();
+        isEditMode = false;
+        editDeviceCode = null;
+        loadData();
+      })
+      .catch(err => {
+        console.error("Error!", err);
+        alert("❌ حدث خطأ في الاتصال");
+      });
   });
-});
+}
 
+function loadData() {
+  const loading = document.getElementById("loading");
+  const table = document.getElementById("otherdevicesTable");
+  const tbody = document.getElementById("tableBody");
 
-  function exportToExcel() {
-    // 🔁 نفس الشيء: استخدم id الجديد للجدول
-    const table = document.getElementById("otherdevicesTable");
-    const workbook = XLSX.utils.table_to_book(table, { sheet: "أجهزةأخرى" });
-    XLSX.writeFile(workbook, "أجهزة أخرى.xlsx");
+  if (!tbody) {
+    console.error("❌ tableBody غير موجود");
+    return;
   }
 
-  window.onload = loadData;
+  if (loading) loading.style.display = "block";
+
+  fetch(scriptURL)
+    .then(res => res.json())
+    .then(data => {
+      tbody.innerHTML = "";
+      otherdevicesData = data || [];
+
+      otherdevicesData.forEach((item, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${item["الرقم الوظيفي"] || ""}</td>
+          <td>${item["اسم الموظف"] || ""}</td>
+          <td>${item["القسم"] || ""}</td>
+          <td>${item["اسم العهدة"] || ""}</td>
+          <td>${item["نوع الجهاز"] || ""}</td>
+          <td>${item["الرقم التسلسل للجهاز"] || ""}</td>
+          <td>${item["رمز الجهاز"] || ""}</td>
+          <td>${item["ملاحظات"] || ""}</td>
+          <td class="actions">
+            <button class="edit-btn" onclick="editRow(${index})">✏️ تعديل</button>
+            <button class="delete-btn" onclick='deleteRow(${JSON.stringify(item["رمز الجهاز"] || "")})'>🗑️ حذف</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      if (table) table.style.display = "table";
+      if (loading) loading.style.display = "none";
+    })
+    .catch(err => {
+      console.error("❌ فشل تحميل البيانات:", err);
+      if (loading) loading.style.display = "none";
+      alert("❌ حدث خطأ أثناء تحميل البيانات");
+    });
+}
+
+function editRow(index) {
+  const item = otherdevicesData[index];
+  if (!item) return;
+
+  document.getElementById("jobNumber").value = item["الرقم الوظيفي"] || "";
+  document.getElementById("employeeName").value = item["اسم الموظف"] || "";
+  document.getElementById("department").value = item["القسم"] || "";
+  document.getElementById("custodyName").value = item["اسم العهدة"] || "";
+  document.getElementById("deviceType").value = item["نوع الجهاز"] || "";
+  document.getElementById("serialNumber").value = item["الرقم التسلسل للجهاز"] || "";
+  document.getElementById("deviceCode").value = item["رمز الجهاز"] || "";
+  document.getElementById("notes").value = item["ملاحظات"] || "";
+
+  isEditMode = true;
+  editDeviceCode = item["رمز الجهاز"] || "";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function deleteRow(deviceCode) {
+  if (!confirm("هل أنت متأكد من الحذف؟")) return;
+
+  const formData = new FormData();
+  formData.append("action", "delete");
+  formData.append("رمز الجهاز", deviceCode);
+
+  fetch(scriptURL, { method: "POST", body: formData })
+    .then(res => res.text())
+    .then(msg => {
+      alert(msg);
+      loadData();
+    })
+    .catch(err => {
+      console.error(err);
+      alert("❌ حدث خطأ أثناء الحذف");
+    });
+}
+
+const searchInput = document.getElementById("searchInput");
+if (searchInput) {
+  searchInput.addEventListener("input", function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#otherdevicesTable tbody tr");
+
+    rows.forEach(row => {
+      const match = Array.from(row.children).some(cell =>
+        cell.textContent.toLowerCase().includes(filter)
+      );
+      row.style.display = match ? "" : "none";
+    });
+  });
+}
+
+function exportToExcel() {
+  const table = document.getElementById("otherdevicesTable");
+  if (!table) {
+    alert("❌ الجدول غير موجود");
+    return;
+  }
+
+  const workbook = XLSX.utils.table_to_book(table, { sheet: "أجهزةأخرى" });
+  XLSX.writeFile(workbook, "أجهزة أخرى.xlsx");
+}
+
+window.onload = loadData;
 </script>
 </body>
 </html>
