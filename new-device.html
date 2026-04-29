@@ -454,7 +454,7 @@
     formData.append("اسم صاحب العهدة", form.elements["owner"].value.trim());
     formData.append("نوع الجهاز", form.elements["deviceType"].value.trim());
     formData.append("رقم التسلسل للجهاز", form.elements["serialDevice"].value.trim());
-   formData.append("رمز المعالج CPU", form.elements["cpuCode"].value.trim());
+    formData.append("رمز المعالج (CPU)", form.elements["cpuCode"].value.trim());
     formData.append("اسم الجهاز", form.elements["deviceName"].value.trim());
     formData.append("رقم التسلسل للشاشة", form.elements["serialMonitor"].value.trim());
     formData.append("رمز الشاشة", form.elements["monitorCode"].value.trim());
@@ -503,7 +503,7 @@
             <td>${item["اسم صاحب العهدة"] || ""}</td>
             <td>${item["نوع الجهاز"] || ""}</td>
             <td>${item["رقم التسلسل للجهاز"] || ""}</td>
-            <td>${item["رمز المعالج CPU"] || ""}</td>
+           <td>${item["رمز المعالج (CPU)"] || ""}</td>
             <td>${item["اسم الجهاز"] || ""}</td>
             <td>${item["رقم التسلسل للشاشة"] || ""}</td>
             <td>${item["رمز الشاشة"] || ""}</td>
@@ -527,6 +527,8 @@
       });
   }
 
+
+
   function editRow(index) {
     const item = dataList[index];
     if (!item) return;
@@ -535,7 +537,7 @@
     form.elements["owner"].value = item["اسم صاحب العهدة"] || "";
     form.elements["deviceType"].value = item["نوع الجهاز"] || "";
     form.elements["serialDevice"].value = item["رقم التسلسل للجهاز"] || "";
-    form.elements["cpuCode"].value = item["رمز المعالج CPU"] || "";
+    form.elements["cpuCode"].value = item["رمز المعالج (CPU)"] || "";
     form.elements["deviceName"].value = item["اسم الجهاز"] || "";
     form.elements["serialMonitor"].value = item["رقم التسلسل للشاشة"] || "";
     form.elements["monitorCode"].value = item["رمز الشاشة"] || "";
