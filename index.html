@@ -287,7 +287,7 @@
         </div>
       
        <div class="card" onclick="location.href='otherscrap.html'">
-          <img src="https://i.postimg.cc/sxqTnJQD/shtb.jpg" alt="أجهزة أأخرى محالة للشطب" />
+          <img src="https://i.postimg.cc/sxqTnJQD/shtb.jpg" alt="أجهزة أخرى محالة للشطب" />
           <span>أجهزة أخرى محالة للشطب</span>
         </div>
         </div>
@@ -323,6 +323,17 @@
 <footer>
   &copy; 2025 قسم تقنية المعلومات – جميع الحقوق محفوظة
 </footer>
+
+<script>
+   // (اختياري) منع كليك يمين + اختصارات
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'F12') e.preventDefault();
+    if (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase())) e.preventDefault();
+    if (e.ctrlKey && e.key.toUpperCase() === 'U') e.preventDefault();
+  });
+
+</script>
 
 </body>
 </html>
