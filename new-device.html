@@ -264,6 +264,27 @@
   }
 
   @media print {
+    body {
+      zoom: 0.75;
+    }
+
+    table {
+      font-size: 10px;
+      table-layout: fixed;
+      width: 100%;
+    }
+
+    td, th {
+      padding: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    h2 {
+      font-size: 16px;
+    }
+
     form,
     .tools,
     .export-buttons,
@@ -274,47 +295,7 @@
       display: none !important;
     }
   }
-  @media print {
-  body {
-    zoom: 0.75; /* تصغير الصفحة بالكامل */
-  }
-
-  table {
-    font-size: 10px; /* تصغير الخط */
-  }
-
-  th, td {
-    padding: 4px; /* تقليل المسافات */
-    white-space: nowrap; /* منع النزول لسطر جديد */
-  }
-
-  h2 {
-    font-size: 16px;
-  }
-
-  /* إخفاء الأشياء غير المهمة */
-  form,
-  .tools,
-  .export-buttons,
-  .footer-button,
-  .search-container,
-  th:last-child,
-  td:last-child {
-    display: none !important;
-  }
-}
-@media print {
-  table {
-    table-layout: fixed;
-    width: 100%;
-  }
-
-  td, th {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-</style>
+  </style>
 </head>
 <body>
 
@@ -377,8 +358,8 @@
     </div>
 
     <div class="form-group">
-      <label for="serialKeyboard">رقم التسلسل للوحة المفاتيح</label>
-      <input type="text" id="serialKeyboard" name="serialKeyboard" placeholder="أدخل الرقم التسلسلي للوحة المفاتيح">
+      <label for="serialKeyboard">رقم التسلسل لوحة المفاتيح</label>
+      <input type="text" id="serialKeyboard" name="serialKeyboard" placeholder="أدخل الرقم التسلسلي لوحة المفاتيح">
     </div>
 
     <div class="form-group">
@@ -397,6 +378,7 @@
     </div>
   </div>
 </form>
+
 <div class="search-container">
   <input type="text" id="searchInput" placeholder="🔍 ابحث في كل الحقول">
 </div>
@@ -410,13 +392,13 @@
       <th>اسم صاحب العهدة</th>
       <th>نوع الجهاز</th>
       <th>رقم التسلسل للجهاز</th>
-       <th>رمز المعالج (CPU)</th>
+      <th>رمز المعالج (CPU)</th>
       <th>اسم الجهاز</th>
       <th>رقم التسلسل للشاشة</th>
       <th>رمز الشاشة</th>
       <th>رقم التسلسل للفأرة</th>
       <th>رقم التسلسل لوحة المفاتيح</th>
-       <th>سنة الإستلام</th>
+      <th>سنة الإستلام</th>
       <th>ملاحظات</th>
       <th>الإجراء</th>
     </tr>
@@ -434,7 +416,7 @@
 </div>
 
 <script>
-  const scriptURL = "https://script.google.com/macros/s/AKfycbw5RZrzW90BHrLlTKQvG29KQfnh0QemIHPEP1ogu2D6JqQFispwmzld9Vtmt_EQKVXs/exec"; // ← غيّر هذا إلى رابط السكربت الفعلي
+  const scriptURL = "https://script.google.com/macros/s/AKfycbw5RZrzW90BHrLlTKQvG29KQfnh0QemIHPEP1ogu2D6JqQFispwmzld9Vtmt_EQKVXs/exec"; 
  
   const form = document.getElementById("new-deviceForm");
   let isEditMode = false;
@@ -445,6 +427,31 @@
     serialDevice: "",
     deviceName: ""
   };
+
+  const inputFields = [
+    'jobNumber', 'owner', 'deviceType', 'serialDevice', 
+    'cpuCode', 'deviceName', 'serialMonitor', 'monitorCode', 
+    'serialMouse', 'serialKeyboard', 'receiveYear', 'notes'
+  ];
+
+  inputFields.forEach(fieldId => {
+    const el = document.getElementById(fieldId);
+    if (el) {
+      el.addEventListener('paste', function(e) {
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+        if (pasteData.includes('\t') || pasteData.includes('\n')) {
+          e.preventDefault();
+          let values = pasteData.split(/[\t\n]/).map(v => v.trim()).filter(v => v !== "");
+          
+          inputFields.forEach((id, idx) => {
+            if (values[idx] !== undefined) {
+              document.getElementById(id).value = values[idx];
+            }
+          });
+        }
+      });
+    }
+  });
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -527,8 +534,6 @@
       });
   }
 
-
-
   function editRow(index) {
     const item = dataList[index];
     if (!item) return;
@@ -604,14 +609,13 @@
   }
 
   window.onload = loadData;
-  // (اختياري) منع كليك يمين + اختصارات
-  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  // تم إزالة منع النقر بزر الماوس الأيمن لكي تظهر قائمة اللصق بشكل طبيعي
   document.addEventListener('keydown', function (e) {
     if (e.key === 'F12') e.preventDefault();
     if (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase())) e.preventDefault();
     if (e.ctrlKey && e.key.toUpperCase() === 'U') e.preventDefault();
   });
-
 </script>
 
 </body>
